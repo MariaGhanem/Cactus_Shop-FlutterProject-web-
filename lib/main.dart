@@ -1,0 +1,138 @@
+import 'package:cactus_shop/AdminPages/OrdersPage.dart';
+import 'package:cactus_shop/screens/SignIn_Screen.dart';
+import 'package:cactus_shop/screens/SignUp_page.dart';
+import 'package:provider/provider.dart';
+import 'package:cactus_shop/firebase_options.dart';
+import 'package:cactus_shop/screens/DeliveryPage.dart';
+import 'package:cactus_shop/screens/InformationPage.dart';
+import 'package:cactus_shop/screens/ProfilePage.dart';
+import 'package:cactus_shop/screens/Welcome_Page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:cactus_shop/helper/CartProvider.dart';
+import 'package:cactus_shop/screens/Home_Page.dart';
+import 'package:cactus_shop/screens/CartPage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'AdminPages/editWelcomePage.dart';
+
+
+//app
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      name: "cactus_shop",
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+
+    return MaterialApp(
+      supportedLocales: const [
+        Locale('ar'), // العربية
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      locale: const Locale('ar'),
+      title: 'Cactus Shop',
+      theme: ThemeData(primarySwatch: Colors.brown),
+      debugShowCheckedModeBanner: false,
+      home: HomePage(),
+      routes: {
+        '/information': (context) => AboutUsPage(),
+        '/delivery': (context) => Delivery(),
+        '/welcome': (context) => WelcomePage(),
+        '/cart': (context) => Cart(),
+        '/profile': (context) => Profile(),
+        '/orders': (context) => OrdersPage(),
+        '/editWelcomeBanner': (context) => EditWelcomeBannerPage(),
+        '/signInScreen': (context) => SignInScreen(),
+        '/signUpScreen': (context) => SignUpScreen(),
+      },
+    );
+  }
+}
+
+// // //web
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+// //for the cart // await Firebase.initializeApp();
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//
+//   await Firebase.initializeApp(
+// //this is adition code
+//     //   name: "cactus_shop",
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+//
+//   runApp(
+//     MultiProvider(
+//       providers: [
+//         ChangeNotifierProvider(create: (_) => CartProvider()),
+//       ],
+//       child: const MyApp(),
+//     ),
+//   );
+// }
+//
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     // Get the current user (null if not logged in)
+// i delete this
+//     User? currentUser = FirebaseAuth.instance.currentUser;
+//
+//     return MaterialApp(
+//       locale: const Locale('ar'), // يمكنك لاحقًا جعله ديناميكيًا
+//       supportedLocales: const [
+//         Locale('ar'), // العربية
+//       ],
+//       localizationsDelegates: const [
+//         GlobalMaterialLocalizations.delegate,
+//         GlobalWidgetsLocalizations.delegate,
+//         GlobalCupertinoLocalizations.delegate,
+//       ],
+//
+//       title: 'Cactus Shop',
+//       theme: ThemeData(primarySwatch: Colors.brown),
+//       debugShowCheckedModeBanner: false,
+//       home: HomePage(),
+//       routes: {
+//         '/information': (context) => AboutUsPage(),
+//         '/delivery': (context) => Delivery(),
+//         '/welcome': (context) => WelcomePage(),
+//         '/cart': (context) => Cart(),
+//         '/profile': (context) => Profile(),
+//         '/orders': (context) => OrdersPage(),
+//         '/editWelcomeBanner': (context) => EditWelcomeBannerPage(),
+//         '/signInScreen': (context) => SignInScreen(),
+//       },
+//     );
+//   }
+// }

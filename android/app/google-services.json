@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "173502754173",
+    "project_id": "cactus-shop-2025",
+    "storage_bucket": "cactus-shop-2025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:173502754173:android:80389d5775bb17535ff014",
+        "android_client_info": {
+          "package_name": "com.example.cactus_shop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB46o8m9nrjWRX2UpUZDRWi1cqm93H4JoE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
