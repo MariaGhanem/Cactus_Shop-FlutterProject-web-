@@ -133,6 +133,19 @@ class _AddProductState extends State<AddProduct> {
     setState(() => _isUploading = true);
 
     try {
+      // تحقق من عدم وجود منتج بنفس الاسم
+      final existing = await FirebaseFirestore.instance
+          .collection('products')
+          .where('name', isEqualTo: _nameController.text.trim())
+          .limit(1)
+          .get();
+
+      if (existing.docs.isNotEmpty) {
+        showSnackBar(context, '❗ يوجد منتج بنفس الاسم مسبقًا');
+        setState(() => _isUploading = false);
+        return;
+      }
+
       final uploadedImageUrls = await _uploadAllImages();
 
       if (uploadedImageUrls.isEmpty) {

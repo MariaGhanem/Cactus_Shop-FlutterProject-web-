@@ -124,20 +124,58 @@ class ViewDiscountCodesPage extends StatelessWidget {
                     final code = codeDoc.id;
                     final percentage = data['percentage'] ?? 0;
                     final isActive = data['isActive'] ?? true;
-
                     return ListTile(
                       title: Text("الكود: $code"),
                       subtitle: Text("نسبة الخصم: $percentage%"),
-                      trailing: Switch(
-                        value: isActive,
-                        onChanged: (value) {
-                          FirebaseFirestore.instance
-                              .collection('discounts')
-                              .doc(code)
-                              .update({'isActive': value});
-                        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Switch(
+                            value: isActive,
+                            onChanged: (value) {
+                              FirebaseFirestore.instance
+                                  .collection('discounts')
+                                  .doc(code)
+                                  .update({'isActive': value});
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("تأكيد الحذف"),
+                                  content: Text("هل أنت متأكد أنك تريد حذف الكود '$code'؟"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text("إلغاء"),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                      ),
+                                      onPressed: () async {
+                                        await FirebaseFirestore.instance
+                                            .collection('discounts')
+                                            .doc(code)
+                                            .delete();
+
+                                        Navigator.pop(context);
+                                        showSnackBar(context, "تم حذف الكود ✅");
+                                      },
+                                      child: const Text("حذف"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     );
+
                   },
                 ),
               ),

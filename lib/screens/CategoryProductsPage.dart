@@ -28,7 +28,6 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
 
   Future<void> checkUserStatus() async {
     final user = FirebaseAuth.instance.currentUser;
-
     if (user == null) {
       setState(() {
         role = 'guest';
@@ -45,6 +44,7 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
         .get();
 
     setState(() {
+      print("Current UID: ${user.uid}");
       role = adminDoc.exists ? 'admin' : 'user';
       isRoleLoaded = true;
     });

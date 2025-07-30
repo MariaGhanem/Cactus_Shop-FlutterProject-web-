@@ -17,28 +17,48 @@ class AuthMethod {
     required String phone,
   }) async {
     String res = "عذرًا، تعذرت العملية. يرجى إعادة المحاولة";
+
     try {
       if (email.isNotEmpty &&
           password.isNotEmpty &&
           name.isNotEmpty &&
           phone.isNotEmpty) {
+        // ✅ محاولة إنشاء حساب جديد
         UserCredential cred = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
+
+        // ✅ حفظ بيانات المستخدم في Firestore
         await _firestore.collection("users").doc(cred.user!.uid).set({
           'name': name,
           'uid': cred.user!.uid,
           'email': email,
           'phone': phone,
+          'createdAt': FieldValue.serverTimestamp(),
         });
+
         res = "تم اضافة الحساب بنجاح";
+      } else {
+        res = "يرجى تعبئة جميع الحقول";
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        res = 'هذا البريد الإلكتروني مستخدم مسبقًا ❌';
+      } else if (e.code == 'invalid-email') {
+        res = 'صيغة البريد الإلكتروني غير صحيحة';
+      } else if (e.code == 'weak-password') {
+        res = 'كلمة المرور ضعيفة. يجب أن تتكون من 6 أحرف على الأقل';
+      } else {
+        res = 'حدث خطأ أثناء إنشاء الحساب: ${e.message}';
       }
     } catch (err) {
-      return err.toString();
+      res = 'حدث خطأ غير متوقع: ${err.toString()}';
     }
+
     return res;
   }
+
 
   // LogIn User
   Future<String> SignInUser({

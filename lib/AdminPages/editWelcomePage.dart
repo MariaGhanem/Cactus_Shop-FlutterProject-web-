@@ -9,6 +9,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:cactus_shop/Widgets/ShowSnackBar.dart';
 
+import '../services/cloudinaryServices.dart';
+
 class EditWelcomeBannerPage extends StatefulWidget {
   const EditWelcomeBannerPage({super.key});
 
@@ -70,8 +72,7 @@ class _EditWelcomeBannerPageState extends State<EditWelcomeBannerPage> {
 
   Future<void> _uploadImage() async {
     if (_webImageFile == null && _imageFile == null) {
-      showSnackBar(context,'يرجى اختيار صورة أولاً'
-      );
+      showSnackBar(context, 'يرجى اختيار صورة أولاً');
       return;
     }
 
@@ -80,34 +81,52 @@ class _EditWelcomeBannerPageState extends State<EditWelcomeBannerPage> {
     });
 
     try {
+
+      // 👇 استرجاع رابط الصورة القديمة
+      final doc = await FirebaseFirestore.instance
+          .collection('settings')
+          .doc('welcomeBanner')
+          .get();
+
+      String oldImageUrl = '';
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null && data.containsKey('image')) {
+          oldImageUrl = data['image'];
+        }
+      }
+
+      // 👇 قراءة الصورة الجديدة
       final bytes = kIsWeb
           ? await _webImageFile!.readAsBytes()
           : await _imageFile!.readAsBytes();
 
-      final imageUrl = await _uploadToCloudinary(bytes);
+      // 👇 رفع الصورة الجديدة
+      final newImageUrl = await _uploadToCloudinary(bytes);
+      if (newImageUrl == null) throw Exception('فشل رفع الصورة');
 
-      if (imageUrl == null) {
-        throw Exception('فشل رفع الصورة');
-      }
-
+      // 👇 تحديث Firestore بالصورة الجديدة
       await FirebaseFirestore.instance
           .collection('settings')
           .doc('welcomeBanner')
-          .set({'image': imageUrl});
+          .set({'image': newImageUrl});
 
-     showSnackBar(context,'تم حفظ الصورة بنجاح'
-      );
+      // 👇 حذف الصورة القديمة إذا تغيّرت
+      if (oldImageUrl.isNotEmpty && oldImageUrl != newImageUrl) {
+        await CloudinaryService.deleteImage(oldImageUrl);
+      }
 
+      showSnackBar(context, 'تم حفظ الصورة بنجاح');
       Navigator.pop(context);
     } catch (e) {
-      showSnackBar(context,'فشل في الحفظ: $e'
-      );
+      showSnackBar(context, 'فشل في الحفظ: $e');
     } finally {
       setState(() {
         _isUploading = false;
       });
     }
   }
+
 
   Widget _previewImage() {
     if (kIsWeb && _webImageFile != null) {

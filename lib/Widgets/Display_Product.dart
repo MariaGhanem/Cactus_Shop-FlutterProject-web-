@@ -190,6 +190,7 @@ import 'package:flutter/material.dart';
 import 'package:cactus_shop/constants.dart';
 
 import '../AdminPages/EditProductPage.dart';
+import '../services/cloudinaryServices.dart';
 import '../services/deleteProductServes.dart';
 
 class DisplayProduct extends StatefulWidget {
@@ -225,6 +226,7 @@ class _DisplayProductState extends State<DisplayProduct> {
   @override
   void initState() {
     super.initState();
+    print(widget.role);
     checkIfFavorite();
   }
 
@@ -285,13 +287,19 @@ class _DisplayProductState extends State<DisplayProduct> {
 
   void deleteProduct(BuildContext context) async {
     if (widget.productId != null) {
+      // احذف الصور من Cloudinary
+      await CloudinaryService.deleteAllProductImages(widget.productId!);
+
+      // احذف المنتج من Firestore
       await FirebaseFirestore.instance
           .collection('products')
           .doc(widget.productId)
           .delete();
-      showSnackBar(context, 'تم حذف المنتج');
+
+      showSnackBar(context, 'تم حذف المنتج مع جميع صوره');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -342,7 +350,6 @@ class _DisplayProductState extends State<DisplayProduct> {
                         ),
                       ),
                     ),
-
                   if (widget.role == "admin") ...[
                     Positioned(
                       top: 5,
@@ -362,7 +369,9 @@ class _DisplayProductState extends State<DisplayProduct> {
                                     child: Text('إلغاء'),
                                   ),
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
+                                    onPressed: ()async{
+                                      await CloudinaryService.deleteAllProductImages(widget.productId!);
+                                      Navigator.of(context).pop(true);},
                                     child: Text('حذف'),
                                   ),
                                 ],

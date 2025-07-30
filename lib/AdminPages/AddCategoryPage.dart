@@ -1,287 +1,3 @@
-// import 'dart:convert';
-// import 'dart:io' show File;
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter/foundation.dart' show kIsWeb;
-// import 'package:flutter/material.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'package:permission_handler/permission_handler.dart';
-//
-// class AddCategoryPage extends StatefulWidget {
-//   final User user;
-//   const AddCategoryPage({super.key, required this.user});
-//
-//   @override
-//   State<AddCategoryPage> createState() => _AddCategoryPageState();
-// }
-//
-// class _AddCategoryPageState extends State<AddCategoryPage> {
-//   final TextEditingController _nameController = TextEditingController();
-//
-//   File? _imageFile; // للأندرويد
-//   XFile? _webImageFile; // للويب
-//   final ImagePicker _picker = ImagePicker();
-//
-//   // لتحميل الفئات من Firestore
-//   late Stream<QuerySnapshot> _categoriesStream;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _categoriesStream = FirebaseFirestore.instance
-//         .collection('categories')
-//         .where('userId', isEqualTo: widget.user.uid)
-//         .orderBy('createdAt', descending: true)
-//         .snapshots();
-//   }
-//
-//   Future<void> _pickImage() async {
-//     if (!kIsWeb) {
-//       if (await Permission.storage.isDenied) {
-//         await Permission.storage.request();
-//       }
-//       if (await Permission.storage.isPermanentlyDenied) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//               content: Text(
-//                   'تم رفض صلاحية الوصول للصور. يرجى تفعيلها من الإعدادات.')),
-//         );
-//         return;
-//       }
-//     }
-//
-//     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-//
-//     if (pickedFile != null) {
-//       setState(() {
-//         if (kIsWeb) {
-//           _webImageFile = pickedFile;
-//           _imageFile = null;
-//         } else {
-//           _imageFile = File(pickedFile.path);
-//           _webImageFile = null;
-//         }
-//       });
-//     }
-//   }
-//
-//   Future<String> _convertImageToBase64() async {
-//     if (kIsWeb) {
-//       final bytes = await _webImageFile!.readAsBytes();
-//       return base64Encode(bytes);
-//     } else {
-//       final bytes = await _imageFile!.readAsBytes();
-//       return base64Encode(bytes);
-//     }
-//   }
-//
-//   Future<void> _uploadCategory() async {
-//     if (_nameController.text.trim().isEmpty ||
-//         (_imageFile == null && _webImageFile == null)) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('يرجى إدخال اسم التصنيف واختيار صورة')),
-//       );
-//       return;
-//     }
-//
-//     try {
-//       final base64Image = await _convertImageToBase64();
-//
-//       await FirebaseFirestore.instance.collection('categories').add({
-//         'userId': widget.user.uid,
-//         'name': _nameController.text.trim(),
-//         'image': base64Image,
-//         'createdAt': Timestamp.now(),
-//       });
-//
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('تم إضافة التصنيف بنجاح')),
-//       );
-//
-//       // مسح الإدخالات بعد الإضافة
-//       _nameController.clear();
-//       setState(() {
-//         _imageFile = null;
-//         _webImageFile = null;
-//       });
-//     } catch (e) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('فشل في الإضافة: $e')),
-//       );
-//     }
-//   }
-//
-//   Future<void> _deleteCategory(String docId) async {
-//     try {
-//       final categorySnapshot = await FirebaseFirestore.instance
-//           .collection('categories')
-//           .doc(docId)
-//           .get();
-//
-//       if (!categorySnapshot.exists) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(content: Text('الفئة غير موجودة.')),
-//         );
-//         return;
-//       }
-//
-//       final categoryName = categorySnapshot['name'];
-//
-//       // جلب المنتجات التي تحتوي على هذه الفئة
-//       final productsSnapshot = await FirebaseFirestore.instance
-//           .collection('products')
-//           .where('categories', arrayContains: categoryName)
-//           .get();
-//
-//       for (final productDoc in productsSnapshot.docs) {
-//         final productData = productDoc.data();
-//         List categories = List.from(productData['categories']);
-//
-//         if (categories.length == 1) {
-//           // إذا كانت الفئة الوحيدة → حذف المنتج
-//           await FirebaseFirestore.instance
-//               .collection('products')
-//               .doc(productDoc.id)
-//               .delete();
-//         } else {
-//           // إذا كانت أكثر من فئة → إزالة الفئة المحدوفة
-//           categories.remove(categoryName);
-//           await FirebaseFirestore.instance
-//               .collection('products')
-//               .doc(productDoc.id)
-//               .update({'categories': categories});
-//         }
-//       }
-//
-//       // حذف الفئة بعد تعديل المنتجات
-//       await FirebaseFirestore.instance.collection('categories').doc(docId).delete();
-//
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('تم حذف التصنيف وحذف المنتجات المرتبطة')),
-//       );
-//     } catch (e) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('فشل في الحذف: $e')),
-//       );
-//     }
-//   }
-//
-//
-//   ImageProvider _imageFromBase64(String base64String) {
-//     return MemoryImage(base64Decode(base64String));
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('إضافة تصنيف'),
-//         centerTitle: true,
-//       ),
-//       // backgroundColor: Color(0xFF795548)),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.stretch,
-//           textDirection: TextDirection.rtl,
-//           children: [
-//             if (kIsWeb && _webImageFile != null)
-//               Image.network(_webImageFile!.path, height: 100),
-//             if (!kIsWeb && _imageFile != null)
-//               Image.file(_imageFile!, height: 100),
-//             TextButton.icon(
-//               onPressed: _pickImage,
-//               icon: Icon(Icons.image),
-//               label: Text('اختيار صورة'),
-//             ),
-//             TextField(
-//               controller: _nameController,
-//               decoration: InputDecoration(labelText: 'اسم التصنيف'),
-//               textAlign: TextAlign.right,
-//               textDirection: TextDirection.rtl,
-//             ),
-//             SizedBox(height: 20),
-//             ElevatedButton(
-//               onPressed: _uploadCategory,
-//               style:
-//                   ElevatedButton.styleFrom(backgroundColor: Color(0xFF795548)),
-//               child: Text('إضافة التصنيف'),
-//             ),
-//             SizedBox(height: 20),
-//             Expanded(
-//               child: StreamBuilder<QuerySnapshot>(
-//                 stream: _categoriesStream,
-//                 builder: (context, snapshot) {
-//                   if (snapshot.hasError) {
-//                     return Center(child: Text('حدث خطأ: ${snapshot.error}'));
-//                   }
-//                   if (snapshot.connectionState == ConnectionState.waiting) {
-//                     return Center(child: CircularProgressIndicator());
-//                   }
-//                   final docs = snapshot.data!.docs;
-//
-//                   if (docs.isEmpty) {
-//                     return Center(child: Text('لا توجد فئات حتى الآن'));
-//                   }
-//
-//                   return ListView.builder(
-//                     itemCount: docs.length,
-//                     itemBuilder: (context, index) {
-//                       final data = docs[index].data()! as Map<String, dynamic>;
-//                       final docId = docs[index].id;
-//
-//                       return Card(
-//                         margin: EdgeInsets.symmetric(vertical: 6),
-//                         child: ListTile(
-//                           leading: data['image'] != null
-//                               ? Image(
-//                                   image: _imageFromBase64(data['image']),
-//                                   width: 60,
-//                                   height: 60,
-//                                   fit: BoxFit.cover,
-//                                 )
-//                               : Icon(Icons.category, size: 60),
-//                           title: Text(data['name'] ?? ''),
-//                           trailing: IconButton(
-//                             icon: Icon(Icons.delete, color: Colors.red),
-//                             onPressed: () {
-//                               // تأكيد الحذف
-//                               showDialog(
-//                                 context: context,
-//                                 builder: (context) => AlertDialog(
-//                                   title: Text('تأكيد الحذف'),
-//                                   content: Text('هل تريد حذف هذا التصنيف؟'),
-//                                   actions: [
-//                                     TextButton(
-//                                       child: Text('لا'),
-//                                       onPressed: () => Navigator.pop(context),
-//                                     ),
-//                                     TextButton(
-//                                       child: Text('نعم'),
-//                                       onPressed: () {
-//                                         Navigator.pop(context);
-//                                         _deleteCategory(docId);
-//                                       },
-//                                     ),
-//                                   ],
-//                                 ),
-//                               );
-//                             },
-//                           ),
-//                         ),
-//                       );
-//                     },
-//                   );
-//                 },
-//               ),
-//             )
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io' show File;
@@ -294,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
+
+import '../services/cloudinaryServices.dart';
+import 'editCategoryPage.dart';
 
 class AddCategoryPage extends StatefulWidget {
   final User user;
@@ -317,7 +36,6 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     super.initState();
     _categoriesStream = FirebaseFirestore.instance
         .collection('categories')
-        .where('userId', isEqualTo: widget.user.uid)
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
@@ -328,7 +46,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         await Permission.storage.request();
       }
       if (await Permission.storage.isPermanentlyDenied) {
-        showSnackBar(context, "تم رفض صلاحية الوصول للصور. يرجى تفعيلها من الإعدادات.");
+        showSnackBar(
+            context, "تم رفض صلاحية الوصول للصور. يرجى تفعيلها من الإعدادات.");
         return;
       }
     }
@@ -348,14 +67,17 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     }
   }
 
-  Future<String?> uploadImageToCloudinary(Uint8List imageBytes, String fileName) async {
+  Future<String?> uploadImageToCloudinary(
+      Uint8List imageBytes, String fileName) async {
     const cloudName = 'diuwox1o6';
-    const uploadPreset = 'Category_Image'; // غيّر هذا حسب ما أنشأت في Cloudinary
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+    const uploadPreset = 'Category_Image'; // عدل حسب إعداداتك في Cloudinary
+    final url =
+    Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
 
     final request = http.MultipartRequest('POST', url)
       ..fields['upload_preset'] = uploadPreset
-      ..files.add(http.MultipartFile.fromBytes('file', imageBytes, filename: fileName));
+      ..files.add(
+          http.MultipartFile.fromBytes('file', imageBytes, filename: fileName));
 
     final response = await request.send();
     final responseData = await response.stream.bytesToString();
@@ -394,6 +116,18 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         showSnackBar(context, 'فشل رفع الصورة إلى Cloudinary');
         return;
       }
+      final name = _nameController.text.trim();
+
+      final exists = await FirebaseFirestore.instance
+          .collection('categories')
+          .where('userId', isEqualTo: widget.user.uid)
+          .where('name', isEqualTo: name)
+          .get();
+
+      if (exists.docs.isNotEmpty) {
+        showSnackBar(context, 'اسم التصنيف مستخدم مسبقًا');
+        return;
+      }
 
       await FirebaseFirestore.instance.collection('categories').add({
         'userId': widget.user.uid,
@@ -402,7 +136,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         'createdAt': Timestamp.now(),
       });
 
-      showSnackBar(context,'تم إضافة التصنيف بنجاح');
+      showSnackBar(context, 'تم إضافة التصنيف بنجاح');
 
       _nameController.clear();
       setState(() {
@@ -410,11 +144,36 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         _webImageFile = null;
       });
     } catch (e) {
-    showSnackBar(context,'فشل في الإضافة: $e');
+      showSnackBar(context, 'فشل في الإضافة: $e');
     }
   }
 
-  Future<void> _deleteCategory(String docId) async {
+  Future<void> deleteCategoryAndProductImages(String categoryId) async {
+    try {
+      // 1. جلب جميع المنتجات التي تحتوي على هذا التصنيف فقط
+      final productsSnapshot = await FirebaseFirestore.instance
+          .collection('products')
+          .where('categories', isEqualTo: [categoryId]).get();
+
+      // 2. حذف صور المنتجات من Cloudinary
+      for (final productDoc in productsSnapshot.docs) {
+        final productId = productDoc.id; // هذا هو doc.id وليس productNumber
+        await CloudinaryService.deleteAllProductImages(productId);
+
+        // 3. حذف المنتج من قاعدة البيانات بعد حذف الصور
+        await FirebaseFirestore.instance
+            .collection('products')
+            .doc(productId)
+            .delete();
+      }
+
+      print('✅ تم حذف جميع صور ومنتجات التصنيف بنجاح.');
+    } catch (e) {
+      print('❌ حدث خطأ أثناء حذف صور المنتجات أو المنتجات: $e');
+    }
+  }
+
+  Future<void> _deleteCategory(String docId, String imageUrl) async {
     try {
       final categorySnapshot = await FirebaseFirestore.instance
           .collection('categories')
@@ -422,13 +181,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           .get();
 
       if (!categorySnapshot.exists) {
-       showSnackBar(context,'الفئة غير موجودة.'
-        );
+        showSnackBar(context, 'الفئة غير موجودة.');
         return;
       }
 
       final categoryName = categorySnapshot['name'];
 
+      // الحصول على كل المنتجات المرتبطة بهذه الفئة
       final productsSnapshot = await FirebaseFirestore.instance
           .collection('products')
           .where('categories', arrayContains: categoryName)
@@ -436,14 +195,26 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
       for (final productDoc in productsSnapshot.docs) {
         final productData = productDoc.data();
-        List categories = List.from(productData['categories']);
+        final List categories = List.from(productData['categories'] ?? []);
+        final List<dynamic> imageUrls = productData['images'] ?? [];
 
         if (categories.length == 1) {
+          // المنتج مرتبط فقط بهذه الفئة
+
+          // حذف الصور من Cloudinary
+          for (final imageUrl in imageUrls) {
+            if (imageUrl is String && imageUrl.contains("res.cloudinary.com")) {
+              await CloudinaryService.deleteImage(imageUrl);
+            }
+          }
+
+          // حذف المنتج نفسه
           await FirebaseFirestore.instance
               .collection('products')
               .doc(productDoc.id)
               .delete();
         } else {
+          // المنتج مرتبط بأكثر من فئة: فقط نحذف الفئة من القائمة
           categories.remove(categoryName);
           await FirebaseFirestore.instance
               .collection('products')
@@ -452,11 +223,21 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         }
       }
 
-      await FirebaseFirestore.instance.collection('categories').doc(docId).delete();
+      // حذف صورة الفئة من Cloudinary إن وُجدت
+      if (imageUrl.isNotEmpty) {
+        await CloudinaryService.deleteImage(imageUrl);
+      }
 
-   showSnackBar(context,'تم حذف التصنيف وحذف المنتجات المرتبطة' );
+      // حذف الفئة من Firestore
+      await FirebaseFirestore.instance
+          .collection('categories')
+          .doc(docId)
+          .delete();
+
+      showSnackBar(
+          context, '✅ تم حذف الفئة وكل المنتجات المرتبطة بها وصورها بنجاح');
     } catch (e) {
-      showSnackBar(context,'فشل في الحذف: $e');
+      showSnackBar(context, '❌ فشل في الحذف: $e');
     }
   }
 
@@ -490,8 +271,18 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _uploadCategory,
-              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF795548)),
+              onPressed: () async {
+                showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => Center(
+                      child: CircularProgressIndicator(),
+                    ));
+                await _uploadCategory();
+                Navigator.pop(context);
+              },
+              style:
+              ElevatedButton.styleFrom(backgroundColor: Color(0xFF795548)),
               child: Text('إضافة التصنيف'),
             ),
             SizedBox(height: 20),
@@ -529,30 +320,53 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                           )
                               : Icon(Icons.category, size: 60),
                           title: Text(data['name'] ?? ''),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text('تأكيد الحذف'),
-                                  content: Text('هل تريد حذف هذا التصنيف؟'),
-                                  actions: [
-                                    TextButton(
-                                      child: Text('لا'),
-                                      onPressed: () => Navigator.pop(context),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditCategoryPage(
+                                        categoryId: docId,
+                                        currentName: data['name'],
+                                        currentImageUrl: data['image'],
+                                      ),
                                     ),
-                                    TextButton(
-                                      child: Text('نعم'),
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        _deleteCategory(docId);
-                                      },
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text('تأكيد الحذف'),
+                                      content: Text('هل تريد حذف هذا التصنيف؟'),
+                                      actions: [
+                                        TextButton(
+                                          child: Text('لا'),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                        ),
+                                        TextButton(
+                                          child: Text('نعم'),
+                                          onPressed: () async {
+                                            Navigator.pop(context); // close confirm dialog
+                                              await _deleteCategory(docId, data['image'] ?? '');
+
+                                          },
+
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -567,4 +381,3 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     );
   }
 }
-

@@ -64,6 +64,8 @@ class FavoritesPage extends StatelessWidget {
                   final productData = productSnapshot.data!.data() as Map<String, dynamic>;
                   final productName = productData['name'] ?? 'منتج';
                   final images = productData['images'] as List<dynamic>? ?? [];
+                  final quantity = productData['quantity'] ?? 0; // 👈 إضافة هذه السطر
+                  final isOutOfStock = quantity == 0;
 
                   return Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -115,25 +117,31 @@ class FavoritesPage extends StatelessWidget {
                               right: 8,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.brown.shade700.withOpacity(0.88),
+                                  backgroundColor: isOutOfStock
+                                      ? Colors.grey.shade500
+                                      : Colors.brown.shade700.withOpacity(0.88),
                                   padding: const EdgeInsets.symmetric(vertical: 5),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                onPressed: () {
+                                onPressed: isOutOfStock
+                                    ? null // 👈 يمنع الضغط عند نفاد الكمية
+                                    : () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ProductPage(productId: productNumber),
+                                      builder: (context) =>
+                                          ProductPage(productId: productNumber),
                                     ),
                                   );
                                 },
-                                child: const Text(
-                                  'عرض التفاصيل',
-                                  style: TextStyle(fontSize: 14, color: Colors.white),
+                                child: Text(
+                                  isOutOfStock ? 'غير متوفر' : 'عرض التفاصيل',
+                                  style: const TextStyle(fontSize: 14, color: Colors.white),
                                 ),
                               ),
+
                             ),
                           ],
                         ),
