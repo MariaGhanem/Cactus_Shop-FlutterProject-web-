@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants.dart';
 import '../services/FetchUserData.dart';
 import '../screens/FavoritesPage.dart';
@@ -61,13 +60,6 @@ Widget buildUserProfileView() {
                   child: Column(
                     children: [
                       const Divider(height: 0),
-                      ListTile(
-                        leading: const FaIcon(FontAwesomeIcons.addressCard, color: kBrownColor,),
-                        title: const Text("عنوان التوصيل"),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                        },
-                      ),
                       ListTile(
                         leading: const Icon(Icons.favorite, color: Colors.red),
                         title: const Text("مفضلاتي"),
