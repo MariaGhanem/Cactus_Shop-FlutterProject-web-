@@ -18,7 +18,8 @@ class Delivery extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final size = MediaQuery.of(context).size;
+    final isPortrait = size.height > size.width;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -26,10 +27,22 @@ class Delivery extends StatelessWidget {
         children: [
           // Background image
           Positioned.fill(
-            child: Image.asset(
+            child: isPortrait ? Image.asset(
               "images/delivary.jpg",
               fit: BoxFit.cover,
-            ),
+            )
+                : Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    kBrownColor,
+                    Colors.brown, // أو أي لون تحب إضافته مع التدرج
+                  ],
+                ),
+              ),
+            )
           ),
 
           // Dark overlay

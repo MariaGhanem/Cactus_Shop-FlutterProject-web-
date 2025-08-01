@@ -174,35 +174,37 @@ class _WelcomePageState extends State<WelcomePage> {
 
                       final categories = snapshot.data!.docs;
 
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: categories.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 1,
-                        ),
-                        itemBuilder: (context, index) {
-                          final categoryData =
-                              categories[index].data() as Map<String, dynamic>;
-                          final name = categoryData['name'] ?? '';
-                          final imageUrl = categoryData['image'] ?? '';
+                      return Center(
+                        child:
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: categories.length,
+                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 250, // أقصى عرض لكل عنصر
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              childAspectRatio: 1,
+                            ),
+                            itemBuilder: (context, index) {
+                              final categoryData = categories[index].data() as Map<String, dynamic>;
+                              final name = categoryData['name'] ?? '';
+                              final imageUrl = categoryData['image'] ?? '';
 
-                          final imageProvider = imageUrl.isNotEmpty
-                              ? NetworkImage(imageUrl)
-                              : const AssetImage('images/welcome.jpeg')
-                                  as ImageProvider;
+                              final imageProvider = imageUrl.isNotEmpty
+                                  ? NetworkImage(imageUrl)
+                                  : const AssetImage('images/welcome.jpeg') as ImageProvider;
 
-                          return ImageDisplay(
-                            text: name,
-                            imageProvider: imageProvider,
-                            onTap: () => _navigateToCategory(name),
-                          );
-                        },
+                              return ImageDisplay(
+                                text: name,
+                                imageProvider: imageProvider,
+                                onTap: () => _navigateToCategory(name),
+                              );
+                            },
+                          ),
+
                       );
+
                     },
                   ),
           ],

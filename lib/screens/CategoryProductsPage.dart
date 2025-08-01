@@ -79,14 +79,21 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
             return const Center(child: Text('لا توجد منتجات في هذه الفئة'));
           }
 
-          return GridView.count(
-            crossAxisCount: 2,
-            childAspectRatio: 0.7,
-            children: products.map((doc) {
+          return GridView.builder(
+            padding: const EdgeInsets.all(10),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 250, // يمكن تعديلها لـ 260 أو 270 حسب رغبتك
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.65, // يتحكم في الطول بالنسبة للعرض
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final doc = products[index];
               final data = doc.data()! as Map<String, dynamic>;
               final name = data['name'] ?? '';
 
-              // السعر (أخذ أول سعر إذا متوفر)
+              // السعر
               double price = 0.0;
               final sizesWithPrices = data['sizesWithPrices'] as List<dynamic>?;
               if (sizesWithPrices != null && sizesWithPrices.isNotEmpty) {
@@ -96,7 +103,7 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                 else if (p is double) price = p;
               }
 
-              // جلب أول صورة والتحقق من صحتها
+              // الصورة
               String? imageUrl;
               final images = data['images'] as List<dynamic>?;
               if (images != null && images.isNotEmpty) {
@@ -115,7 +122,6 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
               } else {
                 imageProvider = const AssetImage('images/default.png');
               }
-
               return Stack(
                 children: [
                   DisplayProduct(
@@ -130,7 +136,8 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                           _loadingProductIds.add(productId);
                         });
 
-                       await Navigator.push(context, MaterialPageRoute(builder: (_) => ProductPage(productId: productId)));
+                        await Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => ProductPage(productId: productId)));
 
                         setState(() {
                           _loadingProductIds.remove(productId);
@@ -153,7 +160,7 @@ class _CategoryProductsPageState extends State<CategoryProductsPage> {
                     ),
                 ],
               );
-            }).toList(),
+            },
           );
         },
       ),

@@ -183,6 +183,7 @@
 //     );
 //   }
 // }
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cactus_shop/Widgets/ShowSnackBar.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -424,9 +425,17 @@ class _DisplayProductState extends State<DisplayProduct> {
                 padding: const EdgeInsets.all(4.0),
                 child: Column(
                   children: [
-                    Text(
+                    AutoSizeText(
                       widget.text,
-                      style: kHeadingTwo.copyWith( fontSize: 19),
+                      style: kHeadingTwo.copyWith(fontSize: 19),
+                      maxLines: 1,  // أقصى عدد أسطر مسموح
+                      minFontSize: 12, // أقل حجم ممكن للنص
+                      overflowReplacement: Text(
+                        widget.text,
+                        style: kHeadingTwo.copyWith(fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     Text(
                       "${widget.price}₪",

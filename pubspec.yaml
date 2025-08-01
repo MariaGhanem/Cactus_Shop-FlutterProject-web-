@@ -55,6 +55,7 @@ dependencies:
   path: ^1.8.2
   google_fonts: ^4.0.4
   crypto: ^3.0.3
+  auto_size_text:
 
 dev_dependencies:
   flutter_test:

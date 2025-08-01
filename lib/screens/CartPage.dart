@@ -137,9 +137,14 @@ class _CartState extends State<Cart> {
   Widget _buildCartItem(dynamic item, Widget imageWidget) {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final bool isUnavailable = item.isAvailable == false;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    double imageWidth = screenWidth < 600 ? 100 : 150;
+    double imageHeight = screenWidth < 600 ? 150 : 200;
+    double fontSize = screenWidth < 600 ? 16 : 20;
 
     return AbsorbPointer(
-      absorbing: isUnavailable, // يمنع التفاعل مع المنتج غير المتوفر
+      absorbing: isUnavailable,
       child: Opacity(
         opacity: isUnavailable ? 0.6 : 1.0,
         child: Dismissible(
@@ -147,8 +152,7 @@ class _CartState extends State<Cart> {
           direction: DismissDirection.endToStart,
           onDismissed: (direction) {
             cart.removeItem(item);
-            showSnackBar(context,'${item.name} تمت إزالته من السلة'
-            );
+            showSnackBar(context, '${item.name} تمت إزالته من السلة');
           },
           background: Container(
             color: Colors.red,
@@ -158,6 +162,7 @@ class _CartState extends State<Cart> {
           ),
           child: Card(
             color: isUnavailable ? Colors.red[50] : null,
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Row(
@@ -165,11 +170,11 @@ class _CartState extends State<Cart> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 100,
-                    height: 150,
+                    width: imageWidth,
+                    height: imageHeight,
                     child: imageWidget,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -177,14 +182,15 @@ class _CartState extends State<Cart> {
                         Text(
                           item.name,
                           style: kHeadingOne.copyWith(
+                            fontSize: fontSize,
                             color: isUnavailable ? Colors.red : null,
                             decoration: isUnavailable ? TextDecoration.lineThrough : null,
                           ),
                         ),
-                        const SizedBox(height: 5),
-                        Text(item.size, style: kHeadingOne),
-                        const SizedBox(height: 5),
-                        Text('${item.price} ₪', style: kHeadingOne),
+                        const SizedBox(height: 6),
+                        Text(item.size, style: kHeadingOne.copyWith(fontSize: fontSize - 2)),
+                        const SizedBox(height: 6),
+                        Text('${item.price} ₪', style: kHeadingOne.copyWith(fontSize: fontSize - 2)),
                         if (isUnavailable)
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
@@ -192,6 +198,7 @@ class _CartState extends State<Cart> {
                               'هذا المنتج لم يعد متوفرًا',
                               style: TextStyle(
                                 color: Colors.red,
+                                fontSize: fontSize - 4,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -212,11 +219,11 @@ class _CartState extends State<Cart> {
                                   child: FaIcon(
                                     FontAwesomeIcons.minus,
                                     color: kBrownColor,
-                                    size: 20,
+                                    size: fontSize - 2,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                Text('${item.quantity}', style: kHeadingOne.copyWith(fontSize: 18)),
+                                Text('${item.quantity}', style: kHeadingOne.copyWith(fontSize: fontSize - 2)),
                                 const SizedBox(width: 8),
                                 GestureDetector(
                                   onTap: () {
@@ -225,7 +232,7 @@ class _CartState extends State<Cart> {
                                   child: FaIcon(
                                     FontAwesomeIcons.plus,
                                     color: kBrownColor,
-                                    size: 20,
+                                    size: fontSize - 2,
                                   ),
                                 ),
                               ],
@@ -242,5 +249,6 @@ class _CartState extends State<Cart> {
       ),
     );
   }
+
 
 }

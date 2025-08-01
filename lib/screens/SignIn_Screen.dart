@@ -4,14 +4,9 @@ import 'package:cactus_shop/Widgets/TextField.dart';
 import 'package:cactus_shop/constants.dart';
 import 'package:cactus_shop/Widgets/ShowSnackBar.dart';
 import 'package:cactus_shop/helper/showLoadingDialog.dart';
-import 'package:cactus_shop/screens/SignUp_page.dart';
-import 'package:cactus_shop/screens/Welcome_Page.dart';
 import 'package:cactus_shop/services/forgot_pass.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../helper/CartProvider.dart';
-import '../services/FetchUserData.dart';
 import '../services/authentication.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -39,7 +34,6 @@ class _SignInScreenState extends State<SignInScreen> {
       emailController.text = prefs.getString('email') ?? '';
       passwordController.text = prefs.getString('password') ?? '';
       isChecked = prefs.getBool('rememberMe') ?? false;
-
     });
   }
 
@@ -64,7 +58,7 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
 
-    showLoadingDialog(context); // ✅ أضف هذا السطر هنا قبل بدء العملية
+    showLoadingDialog(context);
 
     String res = await AuthMethod().SignInUser(
       email: emailController.text,
@@ -72,20 +66,39 @@ class _SignInScreenState extends State<SignInScreen> {
       context: context,
     );
 
-    hideLoadingDialog(context); // ✅ يغلق Dialog بعد إتمام العملية
+    hideLoadingDialog(context);
 
     if (res == "تم تسجيل الدخول بنجاح") {
       saveUserCredentials();
-        Navigator.of(context).pushReplacementNamed("/welcome");
+      Navigator.of(context).pushReplacementNamed("/welcome");
     } else {
       showSnackBar(context, res);
     }
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+    final isPortrait = mediaQuery.orientation == Orientation.portrait;
+
+    // حجم الخط للعنوان: بين 18 و 28 (مثلاً)
+    double baseTitleSize = isPortrait ? screenWidth * 0.08 : screenHeight * 0.08;
+    double titleFontSize = baseTitleSize.clamp(18, 28);
+
+    // حجم الخط للعناوين الفرعية: بين 14 و 20
+    double baseSubtitleSize = isPortrait ? screenWidth * 0.045 : screenHeight * 0.045;
+    double subtitleFontSize = baseSubtitleSize.clamp(14, 20);
+
+    // حجم خط النصوص الثانوية: بين 12 و 18
+    double baseTextSize = isPortrait ? screenWidth * 0.04 : screenHeight * 0.04;
+    double textFontSize = baseTextSize.clamp(12, 18);
+
+    // عرض الحاوية يتغير حسب الاتجاه
+    double containerWidth = isPortrait ? screenWidth * 0.9 : screenWidth * 0.6;
+
     return MySafeScaffold(
       backgroundColor: kBrownColor,
       appBar: AppBar(
@@ -93,117 +106,120 @@ class _SignInScreenState extends State<SignInScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          color: kBrownColor,
-          padding: EdgeInsets.symmetric(vertical: screenHeight * 0.05),
-          child: Column(
-            children: [
-              SizedBox(height: screenHeight * 0.15),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.05,
-                  vertical: screenHeight * 0.05,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Container(
+            width: containerWidth,
+            padding: EdgeInsets.symmetric(
+              vertical: screenHeight * 0.04,
+              horizontal: screenWidth * 0.05,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(40),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(40)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'مرحبًا بعودتك',
+                  style: kButtonStyle.copyWith(
+                    fontSize: titleFontSize,
+                    color: kBrownColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                SizedBox(height: screenHeight * 0.02),
+                Text(
+                  'قم بتسجيل الدخول للمتابعة',
+                  style: kHeadingTwo.copyWith(
+                    fontSize: subtitleFontSize,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: screenHeight * 0.03),
+                TextFieldInput(
+                  textEditingController: emailController,
+                  hintText: "البريد الإلكتروني",
+                ),
+                SizedBox(height: screenHeight * 0.02),
+                TextFieldInput(
+                  textEditingController: passwordController,
+                  hintText: "كلمة السر",
+                  isPass: true,
+                ),
+                SizedBox(height: screenHeight * 0.03),
+                Row(
+                  textDirection: TextDirection.rtl,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'مرحبًا بعودتك',
-                      style: kButtonStyle.copyWith(
-                        fontSize: screenWidth * 0.08,
-                        color: kBrownColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Text(
-                      'قم بتسجيل الدخول للمتابعة',
-                      style: kHeadingTwo.copyWith(
-                        fontSize: screenWidth * 0.04,
-                        color: Colors.grey,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    TextFieldInput(
-                      textEditingController: emailController,
-                      hintText: "البريد الإلكتروني",
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    TextFieldInput(
-                      textEditingController: passwordController,
-                      hintText: "كلمة السر",
-                      isPass: true,
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Row(
-                      textDirection: TextDirection.rtl,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Row(
-                            textDirection: TextDirection.rtl,
-                            children: [
-                              Checkbox(
-                                value: isChecked,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isChecked = value!;
-                                  });
-                                },
-                              ),
-                              Flexible(
-                                child: Text(
-                                  'تذكرني',
-                                  style: kHeadingTwo.copyWith(
-                                      fontSize: screenWidth * 0.05),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                    Flexible(
+                      child: Row(
+                        textDirection: TextDirection.rtl,
+                        children: [
+                          Checkbox(
+                            value: isChecked,
+                            onChanged: (value) {
+                              setState(() {
+                                isChecked = value!;
+                              });
+                            },
                           ),
-                        ),
-                        const ForgotPassword(),
-                      ],
+                          Flexible(
+                            child: Text(
+                              'تذكرني',
+                              style: kHeadingTwo.copyWith(
+                                fontSize: textFontSize,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: screenHeight * 0.03),
-                    MyButton(onPress: SignInUser, text: "تسجيل الدخول"),
+                    const ForgotPassword(),
                   ],
                 ),
-              ),
-              SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                textDirection: TextDirection.rtl,
-                children: [
-                  Text(
-                    "لا تمتلك حساب؟",
-                    style: TextStyle(
-                        fontSize: screenWidth * 0.05, color: Colors.white),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacementNamed(context, '/signUpScreen');
-                    },
-                    child: Text(
-                      "أنشئ حسابك الآن",
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.05,
-                        color: Color(0xFFe8dccb),
+                SizedBox(height: screenHeight * 0.03),
+                MyButton(onPress: SignInUser, text: "تسجيل الدخول"),
+                SizedBox(height: screenHeight * 0.02),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Text(
+                      "لا تمتلك حساب؟",
+                      style: TextStyle(fontSize: textFontSize, color: Colors.black87),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacementNamed(context, '/signUpScreen');
+                      },
+                      child: Text(
+                        "أنشئ حسابك الآن",
+                        style: TextStyle(
+                          fontSize: textFontSize,
+                          color: const Color(0xFFe8dccb),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
 }

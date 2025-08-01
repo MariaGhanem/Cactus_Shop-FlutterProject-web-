@@ -57,101 +57,137 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isPortrait = size.height > size.width;
+
     return MySafeScaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-          iconTheme: const IconThemeData(color: Colors.white),
-          backgroundColor: Colors.transparent,
-          elevation: 0),
-      body: Container(
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('images/logo.jpeg'),
-            fit: BoxFit.cover,
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          SizedBox(
+            height: size.height,
+            width: size.width,
+            child: Image.asset(
+              isPortrait ? 'images/logo.jpeg' : 'images/logo3.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SingleChildScrollView(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 25),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(40),
-                    topRight: Radius.circular(40),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 30,
-                      color: kBrownColor
-                    ),
-                  ],
+
+          // الوضع الطولي: نستخدم Column ونضع الكونتينر في الأسفل
+          if (isPortrait)
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                SingleChildScrollView(
+                  child: _buildContainer(size, isPortrait),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'إنشاء حساب جديد',
-                      style: kButtonStyle.copyWith(
-                        color: kBrownColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Row(
-                      textDirection: TextDirection.rtl,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'لديك حساب بالفعل؟',
-                          style: kHeadingTwo.copyWith(
-                            fontSize: 18,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacementNamed(context, '/signInScreen');
-                          },
-                          child: Text(
-                            'تسجيل الدخول',
-                            style: kHeadingTwo.copyWith(
-                              fontSize: 18,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 15),
-                    TextFieldInput(
-                      textEditingController: nameController,
-                      hintText: "اسم المستخدم",
-                    ),
-                    TextFieldInput(
-                      textEditingController: emailController,
-                      hintText: "البريد الإلكتروني",
-                    ),
-                    TextFieldInput(
-                      textEditingController: phoneController,
-                      hintText: "رقم الهاتف",
-                    ),
-                    TextFieldInput(
-                      textEditingController: passwordController,
-                      hintText: "كلمة السر",
-                      isPass: true, // Enables password toggle feature
-                    ),
-                    SizedBox(height: 20),
-                    MyButton(text: "إنشاء حساب", onPress: signupUser)
-                  ],
-                ),
+              ],
+            ),
+
+          // الوضع العرضي: نستخدم Center لوضع الكونتينر في منتصف الشاشة
+          if (!isPortrait)
+            Center(
+              child: SingleChildScrollView(
+                child: _buildContainer(size, isPortrait),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
+
+// دالة تبني الكونتينر بحيث لا يتكرر الكود
+  Widget _buildContainer(Size size, bool isPortrait) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isPortrait ? 30 : size.width * 0.15,
+        vertical: isPortrait ? 25 : size.height * 0.05,
+      ),
+      margin: EdgeInsets.only(
+        bottom: isPortrait ? 0 : size.height * 0.05,
+        left: isPortrait ? 0 : size.width * 0.1,
+        right: isPortrait ? 0 : size.width * 0.1,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:  BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+          bottomLeft: isPortrait ? Radius.circular(0): Radius.circular(40),
+          bottomRight: isPortrait ? Radius.circular(0): Radius.circular(40),
+
+        ),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 30,
+            color: kBrownColor,
+          ),
+        ],
+      ),
+      width: isPortrait ? double.infinity : size.width * 0.7,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'إنشاء حساب جديد',
+            style: kButtonStyle.copyWith(
+              color: kBrownColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Row(
+            textDirection: TextDirection.rtl,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'لديك حساب بالفعل؟',
+                style: kHeadingTwo.copyWith(
+                  fontSize: 18,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacementNamed(context, '/signInScreen');
+                },
+                child: Text(
+                  'تسجيل الدخول',
+                  style: kHeadingTwo.copyWith(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          TextFieldInput(
+            textEditingController: nameController,
+            hintText: "اسم المستخدم",
+          ),
+          TextFieldInput(
+            textEditingController: emailController,
+            hintText: "البريد الإلكتروني",
+          ),
+          TextFieldInput(
+            textEditingController: phoneController,
+            hintText: "رقم الهاتف",
+          ),
+          TextFieldInput(
+            textEditingController: passwordController,
+            hintText: "كلمة السر",
+            isPass: true,
+          ),
+          const SizedBox(height: 20),
+          MyButton(text: "إنشاء حساب", onPress: signupUser),
+        ],
+      ),
+    );
+  }
+
+
 }

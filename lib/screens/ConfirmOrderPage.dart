@@ -14,13 +14,35 @@ class ConfirmOrderPage extends StatefulWidget {
 
 class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _instagramController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
   final _discountCodeController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('معلومة مهمة'),
+            content: const Text('الدفع يتم عند الاستلام فقط.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('موافق'),
+              ),
+            ],
+          );
+        },
+      );
+    });
+  }
 
   double _discountValue = 0.0;
   double _finalPrice = 0.0;
@@ -232,20 +254,20 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('تأكيد الطلب'),
+          title: const Text('تأكيد الطلب'),
           centerTitle: true,
         ),
         body: cart.items.isEmpty
-            ? Center(child: Text('سلة المشتريات فارغة'))
+            ? const Center(child: Text('سلة المشتريات فارغة'))
             : Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
             child: ListView(
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'الاسم الكامل',
                     border: OutlineInputBorder(),
                   ),
@@ -257,10 +279,10 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     return null;
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _phoneController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'رقم الهاتف',
                     border: OutlineInputBorder(),
                   ),
@@ -276,16 +298,16 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     return null;
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _instagramController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'حساب الانستجرام (اختياري)',
                     border: OutlineInputBorder(),
                   ),
                   textDirection: TextDirection.ltr,
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedArea,
                   decoration: const InputDecoration(labelText: 'منطقة التوصيل'),
@@ -299,13 +321,13 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     if (value != null) updateDeliveryFee(value);
                   },
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 if (selectedArea != 'نقطة استلام مجانية في جنين')
                   TextFormField(
                     controller: _addressController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'العنوان بالتفصيل',
-                      border: OutlineInputBorder(),
+                      border:  OutlineInputBorder(),
                     ),
                     maxLines: 3,
                     textDirection: TextDirection.rtl,
@@ -316,45 +338,45 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                       return null;
                     },
                   ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _notesController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'ملاحظات ',
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 2,
                   textDirection: TextDirection.rtl,
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _discountCodeController,
                   decoration: InputDecoration(
                     labelText: 'كود الخصم',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                     errorText: _discountError,
                     suffixIcon: IconButton(
-                      icon: Icon(Icons.check),
+                      icon: const Icon(Icons.check),
                       onPressed: _checkDiscountCode,
                     ),
                   ),
                   textDirection: TextDirection.ltr,
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     if (_discountValue > 0) ...[
                       Text(
                         'السعر قبل الخصم: ${cart.totalPrice.toStringAsFixed(0)} ₪',
-                        style: TextStyle(
+                        style: const TextStyle(
                           decoration: TextDecoration.lineThrough,
                           color: Colors.red,
                         ),
                       ),
                       Text(
                         'السعر بعد الخصم: ${_finalPrice.toStringAsFixed(0)} ₪',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.green,
@@ -363,7 +385,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     ] else
                       Text(
                         'الإجمالي: ${cart.totalPrice.toStringAsFixed(0)} ₪',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -371,7 +393,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     const SizedBox(height: 8),
                     Text(
                       'تكلفة التوصيل: $deliveryFee ₪',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
@@ -380,7 +402,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     const SizedBox(height: 6),
                     Text(
                       'المجموع النهائي: ${((_discountValue > 0 ? _finalPrice : cart.totalPrice) + deliveryFee).toStringAsFixed(0)} ₪',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.blue,
@@ -388,7 +410,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _isSubmitting
                       ? null
@@ -400,19 +422,19 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     }
                     _submitOrder(context);
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    textStyle: const TextStyle(fontSize: 18),
+                  ),
                   child: _isSubmitting
-                      ? SizedBox(
+                      ? const SizedBox(
                     width: 20,
                     height: 20,
                     child:
                     CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                      : Text('تأكيد الطلب'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    textStyle: TextStyle(fontSize: 18),
-                  ),
+                      : const Text('تأكيد الطلب'),
                 ),
               ],
             ),

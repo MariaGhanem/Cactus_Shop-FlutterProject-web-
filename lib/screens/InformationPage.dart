@@ -230,6 +230,8 @@ class _AboutUsPageState extends State<AboutUsPage> {
             _buildSocialIcon(FontAwesomeIcons.instagram, 'https://www.instagram.com/cactus.shop.ps2?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=='),
             const SizedBox(width: 15),
             _buildSocialIcon(FontAwesomeIcons.whatsapp, 'https://api.whatsapp.com/message/6FIZHRUPNYXBD1?autoload=1&app_absent=0'),
+            const SizedBox(width: 15),
+            _buildSocialIcon(FontAwesomeIcons.facebook, 'https://www.facebook.com/profile.php?id=100054224901024'),
           ],
         ),
       ],
