@@ -45,3 +45,6 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+# Firebase files - DO NOT COMMIT
+android/app/google-services.json
+lib/firebase_options.dart
