@@ -193,13 +193,32 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           .where('categories', arrayContains: categoryName)
           .get();
 
+      if (docId == "QRF5qE5EyeLEXK6JzcFS") {
+        // ممنوع حذف فئة "جميع المنتجات"
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("تنبيه"),
+            content: Text("لا يمكن حذف فئة جميع المنتجات."),
+            actions: [
+              TextButton(
+                child: Text("حسنًا"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+
       for (final productDoc in productsSnapshot.docs) {
         final productData = productDoc.data();
         final List categories = List.from(productData['categories'] ?? []);
         final List<dynamic> imageUrls = productData['images'] ?? [];
 
-        if (categories.length == 1) {
-          // المنتج مرتبط فقط بهذه الفئة
+        if (categories.length == 2) {
+          // المنتج مرتبط فقط بهذه الفئة وفئة جميع المنتجات
 
           // حذف الصور من Cloudinary
           for (final imageUrl in imageUrls) {
@@ -319,7 +338,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                             fit: BoxFit.cover,
                           )
                               : Icon(Icons.category, size: 60),
-                          title: Text(data['name'] ?? ''),
+                          title: Row(
+                            children: [
+                              Text(data['name'] ?? ''),
+                              if (docId == "QRF5qE5EyeLEXK6JzcFS")
+                                Icon(Icons.lock, color: Colors.grey, size: 18),
+                            ],
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
