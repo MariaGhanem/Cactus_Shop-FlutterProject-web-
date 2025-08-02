@@ -46,9 +46,11 @@ class _AddProductState extends State<AddProduct> {
   }
 
   Future<void> _loadCategories() async {
-    final snapshot = await FirebaseFirestore.instance.collection('categories').get();
+    final snapshot =
+        await FirebaseFirestore.instance.collection('categories').get();
     setState(() {
-      allCategories = snapshot.docs.map((doc) => doc['name'].toString()).toList();
+      allCategories =
+          snapshot.docs.map((doc) => doc['name'].toString()).toList();
     });
   }
 
@@ -59,9 +61,10 @@ class _AddProductState extends State<AddProduct> {
     try {
       if (!kIsWeb) {
         await requestStoragePermission();
-        if (await Permission.storage.isPermanentlyDenied || await Permission.photos.isPermanentlyDenied) {
-          showSnackBar(context,'تم رفض صلاحية الوصول للصور. يرجى تفعيلها من الإعدادات.'
-          );
+        if (await Permission.storage.isPermanentlyDenied ||
+            await Permission.photos.isPermanentlyDenied) {
+          showSnackBar(context,
+              'تم رفض صلاحية الوصول للصور. يرجى تفعيلها من الإعدادات.');
           return;
         }
       }
@@ -87,7 +90,7 @@ class _AddProductState extends State<AddProduct> {
       }
     } catch (e) {
       print('فشل اختيار الصور: $e');
-      showSnackBar(context,'فشل في اختيار الصور');
+      showSnackBar(context, 'فشل في اختيار الصور');
     } finally {
       setState(() => _isPickingImages = false);
     }
@@ -99,7 +102,8 @@ class _AddProductState extends State<AddProduct> {
     if (kIsWeb) {
       for (var xfile in _webImages) {
         final bytes = await xfile.readAsBytes();
-        final url = await CloudinaryHelper.uploadImageToCloudinary(bytes, xfile.name);
+        final url =
+            await CloudinaryHelper.uploadImageToCloudinary(bytes, xfile.name);
         if (url != null) {
           uploadedUrls.add(url);
         }
@@ -108,7 +112,8 @@ class _AddProductState extends State<AddProduct> {
       int count = 0;
       for (var bytes in _mobileImageBytes) {
         final fileName = 'mobile_image_$count.jpg';
-        final url = await CloudinaryHelper.uploadImageToCloudinary(bytes, fileName);
+        final url =
+            await CloudinaryHelper.uploadImageToCloudinary(bytes, fileName);
         if (url != null) {
           uploadedUrls.add(url);
         }
@@ -126,7 +131,7 @@ class _AddProductState extends State<AddProduct> {
         (kIsWeb ? _webImages.isEmpty : _mobileImageBytes.isEmpty) ||
         selectedCategories.isEmpty ||
         sizePriceList.isEmpty) {
-      showSnackBar(context,'يرجى تعبئة جميع الحقول وإضافة صورة وحجم وسعر');
+      showSnackBar(context, 'يرجى تعبئة جميع الحقول وإضافة صورة وحجم وسعر');
       return;
     }
 
@@ -149,23 +154,27 @@ class _AddProductState extends State<AddProduct> {
       final uploadedImageUrls = await _uploadAllImages();
 
       if (uploadedImageUrls.isEmpty) {
-        showSnackBar(context,'❗ يجب رفع صورة واحدة على الأقل.');
+        showSnackBar(context, '❗ يجب رفع صورة واحدة على الأقل.');
         setState(() => _isUploading = false);
         return;
       }
 
-      final countersRef = FirebaseFirestore.instance.collection('counters').doc('products');
+      final countersRef =
+          FirebaseFirestore.instance.collection('counters').doc('products');
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final counterSnapshot = await transaction.get(countersRef);
         int newProductNumber = 1;
-        if (counterSnapshot.exists && counterSnapshot.data()!.containsKey('lastProductNumber')) {
+        if (counterSnapshot.exists &&
+            counterSnapshot.data()!.containsKey('lastProductNumber')) {
           newProductNumber = (counterSnapshot['lastProductNumber'] as int) + 1;
         }
 
-        transaction.set(countersRef, {'lastProductNumber': newProductNumber}, SetOptions(merge: true));
+        transaction.set(countersRef, {'lastProductNumber': newProductNumber},
+            SetOptions(merge: true));
 
-        final productRef = FirebaseFirestore.instance.collection('products').doc();
+        final productRef =
+            FirebaseFirestore.instance.collection('products').doc();
         transaction.set(productRef, {
           'userId': widget.user.uid,
           'images': uploadedImageUrls,
@@ -190,7 +199,8 @@ class _AddProductState extends State<AddProduct> {
   }
 
   void _addSizePrice() {
-    if (_sizeSingleController.text.isNotEmpty && _priceSingleController.text.isNotEmpty) {
+    if (_sizeSingleController.text.isNotEmpty &&
+        _priceSingleController.text.isNotEmpty) {
       setState(() {
         sizePriceList.add({
           'size': _sizeSingleController.text.trim(),
@@ -227,11 +237,13 @@ class _AddProductState extends State<AddProduct> {
           return FutureBuilder<Uint8List>(
             future: xfile.readAsBytes(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.hasData) {
                 return Stack(
                   alignment: Alignment.topRight,
                   children: [
-                    Image.memory(snapshot.data!, width: 100, height: 100, fit: BoxFit.cover),
+                    Image.memory(snapshot.data!,
+                        width: 100, height: 100, fit: BoxFit.cover),
                     IconButton(
                       icon: Icon(Icons.close, color: Colors.red),
                       onPressed: () {
@@ -243,7 +255,10 @@ class _AddProductState extends State<AddProduct> {
                   ],
                 );
               } else {
-                return SizedBox(width: 100, height: 100, child: Center(child: CircularProgressIndicator()));
+                return SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()));
               }
             },
           );
@@ -289,15 +304,15 @@ class _AddProductState extends State<AddProduct> {
                   _buildSelectedImages()
                 else
                   Text("لم يتم اختيار صور", textAlign: TextAlign.right),
-
                 ElevatedButton(
                   onPressed: _isPickingImages ? null : _pickImages,
                   child: _isPickingImages
                       ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
                       : Text('اختيار صور'),
                 ),
                 const SizedBox(height: 20),
@@ -305,7 +320,8 @@ class _AddProductState extends State<AddProduct> {
                   controller: _nameController,
                   decoration: InputDecoration(labelText: 'اسم المنتج'),
                   textAlign: TextAlign.right,
-                  validator: (value) => value == null || value.isEmpty ? 'أدخل اسم المنتج' : null,
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'أدخل اسم المنتج' : null,
                 ),
                 TextFormField(
                   controller: _descriptionController,
@@ -346,16 +362,18 @@ class _AddProductState extends State<AddProduct> {
                   ],
                 ),
                 ...sizePriceList.map((item) => ListTile(
-                  title: Text('${item['size']} - ${item['price']} شيكل', textDirection: TextDirection.rtl),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => _removeSizePrice(item),
-                  ),
-                )),
+                      title: Text('${item['size']} - ${item['price']} شيكل',
+                          textDirection: TextDirection.rtl),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () => _removeSizePrice(item),
+                      ),
+                    )),
                 const SizedBox(height: 20),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text('اختر التصنيفات:', style: TextStyle(fontSize: 16)),
+                  child:
+                      Text('اختر التصنيفات:', style: TextStyle(fontSize: 16)),
                 ),
                 Wrap(
                   spacing: 8,
@@ -379,13 +397,23 @@ class _AddProductState extends State<AddProduct> {
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: _isUploading ? null : _uploadProduct,
-                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF795548)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF795548)),
                   child: _isUploading
-                      ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 3),
+                            ),
+                            SizedBox(width: 12),
+                            Text('جاري الإضافة...',
+                                style: TextStyle(fontSize: 16)),
+                          ],
+                        )
                       : Text('إضافة المنتج'),
                 ),
               ],
