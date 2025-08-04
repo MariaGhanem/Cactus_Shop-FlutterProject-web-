@@ -181,7 +181,13 @@ class _ProductPageState extends State<ProductPage> {
                             return ChoiceChip(
                               label: Text('₪ $price - $size'),
                               selected: isSelected,
-                              selectedColor: Colors.brown[100],
+                              selectedColor: Colors.brown[200],
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.brown[900] : Colors.black,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                              backgroundColor: Colors.brown[50],
+
                               onSelected: (_) {
                                 setState(() {
                                   selectedSizeIndex = index;

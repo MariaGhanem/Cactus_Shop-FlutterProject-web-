@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // لإظهار التاريخ بصيغة مقروءة
 
 class OrderDetailsPage extends StatefulWidget {
-  final QueryDocumentSnapshot orderData;
+  final DocumentSnapshot orderData;
 
   const OrderDetailsPage({super.key, required this.orderData});
 
