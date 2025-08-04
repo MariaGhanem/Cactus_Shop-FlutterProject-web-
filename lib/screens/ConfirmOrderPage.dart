@@ -101,6 +101,21 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       final data = doc.data();
       final value = data?['percentage'];
       final isActive = data?['isActive'] ?? false;
+      final expirationTimestamp = data?['expirationDate']; // <-- تاريخ الانتهاء
+
+      final now = DateTime.now();
+
+      if (expirationTimestamp != null &&
+          expirationTimestamp is Timestamp &&
+          expirationTimestamp.toDate().isBefore(now)) {
+        setState(() {
+          _discountValue = 0.0;
+          _discountChecked = true;
+          _discountError = 'انتهت صلاحية كود الخصم';
+          _finalPrice = Provider.of<CartProvider>(context, listen: false).totalPrice;
+        });
+        return;
+      }
 
       if (value != null && value is num && isActive == true) {
         setState(() {
@@ -130,6 +145,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       });
     }
   }
+
 
   Future<void> _submitOrder(BuildContext context) async {
     if (!_formKey.currentState!.validate()) {

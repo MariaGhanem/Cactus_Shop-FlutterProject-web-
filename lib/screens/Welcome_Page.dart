@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:cactus_shop/helper/app_bar.dart';
 import 'package:cactus_shop/Widgets/Image_Display.dart';
 import 'package:cactus_shop/Widgets/Separator_Container.dart';
 
+import '../Widgets/DiscountCounter.dart';
 import 'CategoryProductsPage.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -17,18 +20,44 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  Stream<QuerySnapshot>? _categoriesStream;
   bool isAdmin = false;
+
+  // متغيرات بيانات الخصم
+  String discountCode = '';
+  int discountPercentage = 0;
+  DateTime discountExpireDate = DateTime.now().add(const Duration(hours: 4));
+  String discountMessage = "خصم حصري لفترة محدودة!";
+
+  // Pagination variables
+  final int batchSize = 6;
+  List<DocumentSnapshot> categories = [];
+  bool isLoadingCategories = false;
+  bool hasMoreCategories = true;
+  DocumentSnapshot? lastCategoryDoc;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
 
-    // تحميل بيانات المشرف بعد وقت بسيط لتخفيف الضغط
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       checkIfAdmin();
-      loadCategoriesStream();
+      loadDiscountData();
+      fetchCategories();
     });
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 100) {
+        fetchCategories();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void checkIfAdmin() async {
@@ -48,12 +77,78 @@ class _WelcomePageState extends State<WelcomePage> {
     }
   }
 
-  void loadCategoriesStream() {
-    _categoriesStream = FirebaseFirestore.instance
+  Future<void> loadDiscountData() async {
+    final doc = await FirebaseFirestore.instance
+        .collection('settings')
+        .doc('currentDiscount')
+        .get();
+
+    if (doc.exists) {
+      final data = doc.data()!;
+      final code = data['code'] ?? '';
+
+      if (code.isNotEmpty) {
+        final discountDoc =
+        await FirebaseFirestore.instance.collection('discounts').doc(code).get();
+
+        if (discountDoc.exists) {
+          final discountData = discountDoc.data()!;
+          final Timestamp? ts = discountData['expirationDate'];
+
+          if (mounted) {
+            setState(() {
+              discountCode = code;
+              discountPercentage = discountData['percentage'] ?? 0;
+              discountMessage = discountData['message'] ?? discountMessage;
+              if (ts != null) discountExpireDate = ts.toDate();
+            });
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> fetchCategories() async {
+    if (isLoadingCategories || !hasMoreCategories) return;
+
+    setState(() {
+      isLoadingCategories = true;
+    });
+
+    Query query = FirebaseFirestore.instance
         .collection('categories')
         .orderBy('createdAt', descending: false)
-        .snapshots();
-    if (mounted) setState(() {}); // لإعادة بناء الواجهة بعد تهيئة الـ stream
+        .limit(batchSize);
+
+    if (lastCategoryDoc != null) {
+      query = query.startAfterDocument(lastCategoryDoc!);
+    }
+
+    final querySnapshot = await query.get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      lastCategoryDoc = querySnapshot.docs.last;
+      categories.addAll(querySnapshot.docs);
+
+      if (querySnapshot.docs.length < batchSize) {
+        hasMoreCategories = false;
+      }
+    } else {
+      hasMoreCategories = false;
+    }
+
+    setState(() {
+      isLoadingCategories = false;
+    });
+  }
+
+  void _navigateToCategory(String categoryName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CategoryProductsPage(categoryName: categoryName),
+      ),
+    );
   }
 
   Widget _buildBanner(String imageUrl) {
@@ -79,15 +174,6 @@ class _WelcomePageState extends State<WelcomePage> {
     );
   }
 
-  void _navigateToCategory(String categoryName) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CategoryProductsPage(categoryName: categoryName),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -100,6 +186,7 @@ class _WelcomePageState extends State<WelcomePage> {
           context: context,
         ),
         body: ListView(
+          controller: _scrollController,
           children: [
             Padding(
               padding: const EdgeInsets.all(10.0),
@@ -152,61 +239,59 @@ class _WelcomePageState extends State<WelcomePage> {
                 textAlign: TextAlign.right,
               ),
             ),
-            //املاح فوارة
+
+            if (discountCode.isNotEmpty && discountPercentage > 0)
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: DiscountCountdownBanner(
+                  expirationDate: discountExpireDate,
+                  message: discountMessage,
+                  discountCode: discountCode,
+                  discountPercentage: discountPercentage,
+                ),
+              ),
+
             SeparatorContainer(text: 'تسوّقي حسب الفئة'),
+
             const SizedBox(height: 20),
-            _categoriesStream == null
+
+            categories.isEmpty && isLoadingCategories
                 ? const Center(child: CircularProgressIndicator())
-                : StreamBuilder<QuerySnapshot>(
-                    stream: _categoriesStream,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(
-                            child: Text('حدث خطأ: ${snapshot.error}'));
-                      }
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.data == null ||
-                          snapshot.data!.docs.isEmpty) {
-                        return const Center(child: Text('لا توجد فئات متاحة'));
-                      }
+                : GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: categories.length + (hasMoreCategories ? 1 : 0),
+              gridDelegate:
+              const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 250,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (context, index) {
+                if (index == categories.length) {
+                  // Loader أثناء تحميل المزيد
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                      final categories = snapshot.data!.docs;
+                final categoryData =
+                categories[index].data() as Map<String, dynamic>;
+                final name = categoryData['name'] ?? '';
+                final imageUrl = categoryData['image'] ?? '';
 
-                      return Center(
-                        child:
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: categories.length,
-                            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 250, // أقصى عرض لكل عنصر
-                              mainAxisSpacing: 16,
-                              crossAxisSpacing: 16,
-                              childAspectRatio: 1,
-                            ),
-                            itemBuilder: (context, index) {
-                              final categoryData = categories[index].data() as Map<String, dynamic>;
-                              final name = categoryData['name'] ?? '';
-                              final imageUrl = categoryData['image'] ?? '';
+                final imageProvider = imageUrl.isNotEmpty
+                    ? NetworkImage(imageUrl)
+                    : const AssetImage('images/welcome.jpeg')
+                as ImageProvider;
 
-                              final imageProvider = imageUrl.isNotEmpty
-                                  ? NetworkImage(imageUrl)
-                                  : const AssetImage('images/welcome.jpeg') as ImageProvider;
-
-                              return ImageDisplay(
-                                text: name,
-                                imageProvider: imageProvider,
-                                onTap: () => _navigateToCategory(name),
-                              );
-                            },
-                          ),
-
-                      );
-
-                    },
-                  ),
+                return ImageDisplay(
+                  text: name,
+                  imageProvider: imageProvider,
+                  onTap: () => _navigateToCategory(name),
+                );
+              },
+            ),
           ],
         ),
         bottomNavigationBar: CustomBottomNavBar(),

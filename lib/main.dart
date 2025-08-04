@@ -13,8 +13,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:cactus_shop/helper/CartProvider.dart';
 import 'package:cactus_shop/screens/Home_Page.dart';
 import 'package:cactus_shop/screens/CartPage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'AdminPages/editWelcomePage.dart';
 
 // Future<void> main() async {
@@ -120,7 +118,6 @@ import 'AdminPages/editWelcomePage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   // شغل شاشة تحميل أولاً
   runApp(const LoadingApp());
 
@@ -166,9 +163,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: HomePage(),
       routes: {
+        '/welcome': (context) => WelcomePage(),
         '/information': (context) => AboutUsPage(),
         '/delivery': (context) => Delivery(),
-        '/welcome': (context) => WelcomePage(),
         '/cart': (context) => Cart(),
         '/profile': (context) => Profile(),
         '/orders': (context) => OrdersPage(),
