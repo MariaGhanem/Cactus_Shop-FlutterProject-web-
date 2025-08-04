@@ -1,188 +1,3 @@
-// import 'package:cactus_shop/constants.dart';
-// import 'package:flutter/material.dart';
-//
-// class DisplayProduct extends StatelessWidget {
-//   DisplayProduct(
-//       {required this.imageProvider,
-//       required String this.text,
-//       required double this.price,
-//       required VoidCallback this.onTap});
-//   final ImageProvider imageProvider;
-//   String text;
-//   double price;
-//   VoidCallback onTap;
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: const EdgeInsets.all(4.0),
-//       child: GestureDetector(
-//         onTap: onTap,
-//         child: Card(
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: Expanded(
-//             child: Column(
-//               children: [
-//                 ClipRRect(
-//                   borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-//                   child: Image(
-//                     image: imageProvider,
-//                     fit: BoxFit.cover,
-//                     height: 190,
-//                     width: double.infinity,
-//                   ),
-//                 ),
-//                 Padding(
-//                   padding: EdgeInsets.all(4.0),
-//                   child: Column(
-//                     children: [
-//                       Text(
-//                         "$text",
-//                         style: kHeadingTwo.copyWith(fontWeight: FontWeight.bold,fontSize: 19),
-//                       ),
-//                       Text(
-//                         "$price₪",
-//                         style: kHeadingTwo.copyWith(fontWeight: FontWeight.bold,fontSize: 14),
-//                       )
-//                     ],
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/material.dart';
-// import 'package:cactus_shop/constants.dart';
-//
-// class DisplayProduct extends StatelessWidget {
-//   final ImageProvider imageProvider;
-//   final String text;
-//   final double price;
-//   final VoidCallback onTap;
-//   final String? role; // admin, user, null
-//   final String? productId;
-//   final String? userId;
-//
-//   const DisplayProduct({
-//     super.key,
-//     required this.imageProvider,
-//     required this.text,
-//     required this.price,
-//     required this.onTap,
-//     this.role,
-//     this.productId,
-//     this.userId,
-//   });
-//
-//   void deleteProduct(BuildContext context) async {
-//     if (productId != null) {
-//       await FirebaseFirestore.instance.collection('products').doc(productId).delete();
-//       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم حذف المنتج')));
-//     }
-//   }
-//
-//   void toggleFavorite() async {
-//     if (userId != null && productId != null) {
-//       final favRef = FirebaseFirestore.instance
-//           .collection('users')
-//           .doc(userId)
-//           .collection('favorites')
-//           .doc(productId);
-//
-//       final doc = await favRef.get();
-//       if (doc.exists) {
-//         await favRef.delete();
-//       } else {
-//         await favRef.set({'productId': productId, 'timestamp': Timestamp.now()});
-//       }
-//     }
-//   }
-//
-//   void editProduct(BuildContext context) {
-//     // هنا يمكنك فتح صفحة تعديل أو Dialog لتعديل بيانات المنتج
-//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تعديل المنتج')));
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: const EdgeInsets.all(4.0),
-//       child: GestureDetector(
-//         onTap: onTap,
-//         child: Card(
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: Column(
-//             children: [
-//               Stack(
-//                 children: [
-//                   ClipRRect(
-//                     borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-//                     child: Image(
-//                       image: imageProvider,
-//                       fit: BoxFit.cover,
-//                       height: 190,
-//                       width: double.infinity,
-//                     ),
-//                   ),
-//                   if (role == "admin") ...[
-//                     Positioned(
-//                       top: 5,
-//                       right: 5,
-//                       child: IconButton(
-//                         icon: Icon(Icons.close, color: Colors.red),
-//                         onPressed: () => deleteProduct(context),
-//                       ),
-//                     ),
-//                     Positioned(
-//                       top: 5,
-//                       left: 5,
-//                       child: IconButton(
-//                         icon: Icon(Icons.edit, color: Colors.blue),
-//                         onPressed: () => editProduct(context),
-//                       ),
-//                     ),
-//                   ] else if (role == "user") ...[
-//                     Positioned(
-//                       top: 5,
-//                       right: 5,
-//                       child: IconButton(
-//                         icon: Icon(Icons.favorite_border, color: Colors.pink),
-//                         onPressed: toggleFavorite,
-//                       ),
-//                     ),
-//                   ]
-//                 ],
-//               ),
-//               Padding(
-//                 padding: EdgeInsets.all(4.0),
-//                 child: Column(
-//                   children: [
-//                     Text(
-//                       "$text",
-//                       style: kHeadingTwo.copyWith(fontWeight: FontWeight.bold, fontSize: 19),
-//                     ),
-//                     Text(
-//                       "$price₪",
-//                       style: kHeadingTwo.copyWith(fontWeight: FontWeight.bold, fontSize: 14),
-//                     )
-//                   ],
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cactus_shop/Widgets/ShowSnackBar.dart';
 
@@ -402,23 +217,41 @@ class _DisplayProductState extends State<DisplayProduct> {
                                 ),
                               )),
                     ),
-                  ] else if (widget.role == "user") ...[
+                  ] else
                     Positioned(
                       top: 5,
                       right: 5,
                       child: isLoading
                           ? const CircularProgressIndicator()
+                          : (widget.role == "user"
+                          ? IconButton(
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.grey,
+                        ),
+                        onPressed: widget.quantity > 0 ? toggleFavorite : null,
+                      )
                           : IconButton(
-                              icon: Icon(
-                                isFavorite
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: isFavorite ? Colors.red : Colors.grey,
-                              ),
-                              onPressed: toggleFavorite, // تعطيل إذا الكمية صفر
+                        icon: const Icon(Icons.favorite_border, color: Colors.grey),
+                        onPressed: () {
+                          // إذا مش مسجل دخول، نعرض ديالوج طلب تسجيل الدخول
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('يرجى تسجيل الدخول'),
+                              content: const Text('يجب تسجيل الدخول لإضافة المنتج للمفضلة.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('حسناً'),
+                                ),
+                              ],
                             ),
+                          );
+                        },
+                      )),
                     ),
-                  ],
+
                 ],
               ),
               Padding(

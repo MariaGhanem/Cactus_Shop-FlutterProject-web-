@@ -59,6 +59,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           children: [
             const Text("معلومات العميل", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
+            Text(
+              "رقم الطلب: ${widget.orderData.id}",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(height: 12),
             Text("الاسم: ${widget.orderData['customerName']}"),
             Text("رقم الهاتف: ${widget.orderData['phone']}"),
             Text("إنستغرام: $instagram"),

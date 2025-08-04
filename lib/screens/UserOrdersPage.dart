@@ -56,6 +56,16 @@ class UserOrdersPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // رقم الطلب (Document ID)
+                      Text(
+                        'رقم الطلب: ${orders[index].id}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.blueAccent),
+                      ),
+                      const SizedBox(height: 8),
+
                       // عرض الوقت بشكل منسق
                       Text(
                         'وقت الطلب: ${formatTimestamp(order['orderDate'])}',
@@ -116,6 +126,7 @@ class UserOrdersPage extends StatelessWidget {
                   ),
                 ),
               );
+
             },
           );
         },

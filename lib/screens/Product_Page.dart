@@ -78,7 +78,11 @@ class _ProductPageState extends State<ProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    final images = (productData?['images'] as List?)?.whereType<String>().where(_isValidCloudinaryUrl).toList() ?? [];
+    final images = (productData?['images'] as List?)
+            ?.whereType<String>()
+            .where(_isValidCloudinaryUrl)
+            .toList() ??
+        [];
 
     return Scaffold(
       appBar: buildAppBar(
@@ -89,195 +93,236 @@ class _ProductPageState extends State<ProductPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : error.isNotEmpty
-          ? Center(child: Text(error))
-          : Padding(
-        padding: const EdgeInsets.all(10),
-        child: ListView(
-          children: [
-            SizedBox(
-              height: 360,
-              child: images.isNotEmpty
-                  ? Column(
-                children: [
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: images.length,
-                      itemBuilder: (context, index) {
-                        final imageUrl = images[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.contain,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      images.length,
-                          (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 12 : 8,
-                        height: _currentPage == index ? 12 : 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? Colors.brown
-                              : Colors.brown.withOpacity(0.3),
-                          shape: BoxShape.circle,
-                        ),
+              ? Center(child: Text(error))
+              : Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: ListView(
+                    children: [
+                      SizedBox(
+                        height: 360,
+                        child: images.isNotEmpty
+                            ? Column(
+                                children: [
+                                  Expanded(
+                                    child: PageView.builder(
+                                      controller: _pageController,
+                                      itemCount: images.length,
+                                      itemBuilder: (context, index) {
+                                        final imageUrl = images[index];
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10),
+                                          child:InteractiveViewer(
+                                            panEnabled: true,
+                                            minScale: 1,
+                                            maxScale: 4,
+                                            child: Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      images.length,
+                                      (index) => AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        width: _currentPage == index ? 12 : 8,
+                                        height: _currentPage == index ? 12 : 8,
+                                        decoration: BoxDecoration(
+                                          color: _currentPage == index
+                                              ? Colors.brown
+                                              : Colors.brown.withOpacity(0.3),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Image.asset('images/default.png'),
                       ),
-                    ),
-                  ),
-                ],
-              )
-                  : Image.asset('images/default.png'),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '₪ ${(productData!['sizesWithPrices'] as List).isNotEmpty ? productData!['sizesWithPrices'][selectedSizeIndex]['price'] : 0} ',
-              style: kHeadingOne,
-              textAlign: TextAlign.right,
-            ),
-            Text(productData!['name'] ?? 'اسم المنتج',
-                style: kHeadingOne, textAlign: TextAlign.right),
-            const SizedBox(height: 5),
-            Text(productData!['description'] ?? 'وصف للمنتج',
-                style: kHeadingTwo, textAlign: TextAlign.right),
-            const SizedBox(height: 5),
-            Text('الأحجام المتوفرة',
-                style: kHeadingOne, textAlign: TextAlign.right),
-            Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 8,
-              children: List.generate(
-                (productData!['sizesWithPrices'] as List).length,
-                    (index) {
-                  final size = productData!['sizesWithPrices'][index]['size'];
-                  final price = productData!['sizesWithPrices'][index]['price'];
-                  final isSelected = selectedSizeIndex == index;
-                  return ChoiceChip(
-                    label: Text('₪ $price - $size'),
-                    selected: isSelected,
-                    selectedColor: Colors.brown[100],
-                    onSelected: (_) {
-                      setState(() {
-                        selectedSizeIndex = index;
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text('طريقة الاستخدام', style: kHeadingTwo, textAlign: TextAlign.right),
-            Text(productData!['usage'] ?? '', style: kHeadingTwo, textAlign: TextAlign.right),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                final selected = (productData!['sizesWithPrices'] as List)[selectedSizeIndex];
-                final imagePath = images.isNotEmpty ? images[0] : '';
-
-                final cartProvider = Provider.of<CartProvider>(context, listen: false);
-
-                await cartProvider.addItem(
-                  CartItem(
-                    id: widget.productId,
-                    name: productData!['name'] ?? '',
-                    size: selected['size'],
-                    price: (selected['price'] as num).toDouble(),
-                    image: imagePath,
-                    productNumber: productData!['productNumber'].toString() ?? "",
-                    quantity: 1,
-                  ),
-                );
-
-                // يتم الحفظ تلقائياً في addItem() في الكود المرسل سابقاً
-
-                showSnackBar(context, 'تمت إضافة المنتج إلى السلة');
-              },
-              child: const Center(
-                child: Icon(Icons.add_shopping_cart_sharp, size: 30, color: kBrownColor),
-              ),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.brown[50]),
-                shadowColor: MaterialStateProperty.all(kBrownColor),
-                elevation: MaterialStateProperty.all(9),
-                shape: MaterialStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text('منتجات ذات صلة', style: kHeadingOne, textAlign: TextAlign.right),
-            const SizedBox(height: 10),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('products')
-                  .where('categories', arrayContains: productData!['categories'][0])
-                  .limit(4)
-                  .snapshots(),
-              builder: (ctx, snap) {
-                if (!snap.hasData) return const CircularProgressIndicator();
-                final docs = snap.data!.docs.where((d) => d.id != widget.productId).toList();
-                if (docs.isEmpty) return const Text('لا توجد منتجات مرتبطة');
-
-                return SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: docs.length,
-                    itemBuilder: (context, i) {
-                      final d = docs[i].data() as Map<String, dynamic>;
-                      final imageList = (d['images'] as List?)?.whereType<String>().where(_isValidCloudinaryUrl).toList() ?? [];
-                      final img = imageList.isNotEmpty
-                          ? NetworkImage(imageList[0])
-                          : null;
-
-                      final name = d['name'] ?? '';
-                      final price = (d['sizesWithPrices'] as List).isNotEmpty
-                          ? d['sizesWithPrices'][0]['price']
-                          : 0;
-                      return SizedBox(
-                        width: 160,
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProductPage(productId: docs[i].id),
-                              ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '₪ ${(productData!['sizesWithPrices'] as List).isNotEmpty ? productData!['sizesWithPrices'][selectedSizeIndex]['price'] : 0} ',
+                        style: kHeadingOne,
+                        textAlign: TextAlign.right,
+                      ),
+                      Text(productData!['name'] ?? 'اسم المنتج',
+                          style: kHeadingOne, textAlign: TextAlign.right),
+                      const SizedBox(height: 5),
+                      SelectableText(
+                        productData!['description'] ?? 'وصف للمنتج',
+                        style: kHeadingTwo,
+                        textAlign: TextAlign.right,
+                      ),
+                      const SizedBox(height: 5),
+                      Text('الأحجام المتوفرة',
+                          style: kHeadingOne, textAlign: TextAlign.right),
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 8,
+                        children: List.generate(
+                          (productData!['sizesWithPrices'] as List).length,
+                          (index) {
+                            final size =
+                                productData!['sizesWithPrices'][index]['size'];
+                            final price =
+                                productData!['sizesWithPrices'][index]['price'];
+                            final isSelected = selectedSizeIndex == index;
+                            return ChoiceChip(
+                              label: Text('₪ $price - $size'),
+                              selected: isSelected,
+                              selectedColor: Colors.brown[100],
+                              onSelected: (_) {
+                                setState(() {
+                                  selectedSizeIndex = index;
+                                });
+                              },
                             );
                           },
-                          child: Card(
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: img != null
-                                      ? Image(image: img, fit: BoxFit.cover)
-                                      : const Center(child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey)),
-                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text('طريقة الاستخدام',
+                          style: kHeadingTwo, textAlign: TextAlign.right),
+                      SelectableText(productData!['usage'] ?? '',
+                          style: kHeadingTwo, textAlign: TextAlign.right),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final selected = (productData!['sizesWithPrices']
+                              as List)[selectedSizeIndex];
+                          final imagePath = images.isNotEmpty ? images[0] : '';
 
-                                Text(name, style: kHeadingTwo),
-                                Text('₪ $price', style: kHeadingTwo),
-                              ],
+                          final cartProvider =
+                              Provider.of<CartProvider>(context, listen: false);
+
+                          await cartProvider.addItem(
+                            CartItem(
+                              id: widget.productId,
+                              name: productData!['name'] ?? '',
+                              size: selected['size'],
+                              price: (selected['price'] as num).toDouble(),
+                              image: imagePath,
+                              productNumber:
+                                  productData!['productNumber'].toString() ??
+                                      "",
+                              quantity: 1,
                             ),
+                          );
+
+                          // يتم الحفظ تلقائياً في addItem() في الكود المرسل سابقاً
+
+                          showSnackBar(context, 'تمت إضافة المنتج إلى السلة');
+                        },
+                        child: const Center(
+                          child: Icon(Icons.add_shopping_cart_sharp,
+                              size: 30, color: kBrownColor),
+                        ),
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.all(Colors.brown[50]),
+                          shadowColor: MaterialStateProperty.all(kBrownColor),
+                          elevation: MaterialStateProperty.all(9),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30)),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 20),
+                      Text('منتجات ذات صلة',
+                          style: kHeadingOne, textAlign: TextAlign.right),
+                      const SizedBox(height: 10),
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('products')
+                            .where('categories',
+                                arrayContains: productData!['categories'][0])
+                            .limit(4)
+                            .snapshots(),
+                        builder: (ctx, snap) {
+                          if (!snap.hasData)
+                            return const CircularProgressIndicator();
+                          final docs = snap.data!.docs
+                              .where((d) => d.id != widget.productId)
+                              .toList();
+                          if (docs.isEmpty)
+                            return const Text('لا توجد منتجات مرتبطة');
+
+                          return SizedBox(
+                            height: 200,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: docs.length,
+                              itemBuilder: (context, i) {
+                                final d =
+                                    docs[i].data() as Map<String, dynamic>;
+                                final imageList = (d['images'] as List?)
+                                        ?.whereType<String>()
+                                        .where(_isValidCloudinaryUrl)
+                                        .toList() ??
+                                    [];
+                                final img = imageList.isNotEmpty
+                                    ? NetworkImage(imageList[0])
+                                    : null;
+
+                                final name = d['name'] ?? '';
+                                final price =
+                                    (d['sizesWithPrices'] as List).isNotEmpty
+                                        ? d['sizesWithPrices'][0]['price']
+                                        : 0;
+                                return SizedBox(
+                                  width: 160,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => ProductPage(
+                                              productId: docs[i].id),
+                                        ),
+                                      );
+                                    },
+                                    child: Card(
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            child: img != null
+                                                ? Image(
+                                                    image: img,
+                                                    fit: BoxFit.cover)
+                                                : const Center(
+                                                    child: Icon(
+                                                        Icons
+                                                            .image_not_supported,
+                                                        size: 50,
+                                                        color: Colors.grey)),
+                                          ),
+                                          Text(name, style: kHeadingTwo),
+                                          Text('₪ $price', style: kHeadingTwo),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+                ),
     );
   }
 }

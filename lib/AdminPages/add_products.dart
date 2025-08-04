@@ -23,9 +23,10 @@ class _AddProductState extends State<AddProduct> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _usageController = TextEditingController();
-  final _quantityController = TextEditingController();
+  // تم إزالة حقل الكمية العام
   final _sizeSingleController = TextEditingController();
   final _priceSingleController = TextEditingController();
+  final _quantitySingleController = TextEditingController(); // حقل كمية لكل حجم
 
   List<Uint8List> _mobileImageBytes = [];
   List<XFile> _webImages = [];
@@ -47,7 +48,7 @@ class _AddProductState extends State<AddProduct> {
 
   Future<void> _loadCategories() async {
     final snapshot =
-        await FirebaseFirestore.instance.collection('categories').get();
+    await FirebaseFirestore.instance.collection('categories').get();
     setState(() {
       allCategories =
           snapshot.docs.map((doc) => doc['name'].toString()).toList();
@@ -103,7 +104,7 @@ class _AddProductState extends State<AddProduct> {
       for (var xfile in _webImages) {
         final bytes = await xfile.readAsBytes();
         final url =
-            await CloudinaryHelper.uploadImageToCloudinary(bytes, xfile.name);
+        await CloudinaryHelper.uploadImageToCloudinary(bytes, xfile.name);
         if (url != null) {
           uploadedUrls.add(url);
         }
@@ -113,7 +114,7 @@ class _AddProductState extends State<AddProduct> {
       for (var bytes in _mobileImageBytes) {
         final fileName = 'mobile_image_$count.jpg';
         final url =
-            await CloudinaryHelper.uploadImageToCloudinary(bytes, fileName);
+        await CloudinaryHelper.uploadImageToCloudinary(bytes, fileName);
         if (url != null) {
           uploadedUrls.add(url);
         }
@@ -131,7 +132,7 @@ class _AddProductState extends State<AddProduct> {
         (kIsWeb ? _webImages.isEmpty : _mobileImageBytes.isEmpty) ||
         selectedCategories.isEmpty ||
         sizePriceList.isEmpty) {
-      showSnackBar(context, 'يرجى تعبئة جميع الحقول وإضافة صورة وحجم وسعر');
+      showSnackBar(context, 'يرجى تعبئة جميع الحقول وإضافة صورة وحجم وسعر وكمية');
       return;
     }
 
@@ -160,7 +161,7 @@ class _AddProductState extends State<AddProduct> {
       }
 
       final countersRef =
-          FirebaseFirestore.instance.collection('counters').doc('products');
+      FirebaseFirestore.instance.collection('counters').doc('products');
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final counterSnapshot = await transaction.get(countersRef);
@@ -174,14 +175,14 @@ class _AddProductState extends State<AddProduct> {
             SetOptions(merge: true));
 
         final productRef =
-            FirebaseFirestore.instance.collection('products').doc();
+        FirebaseFirestore.instance.collection('products').doc();
         transaction.set(productRef, {
           'userId': widget.user.uid,
           'images': uploadedImageUrls,
           'name': _nameController.text.trim(),
           'description': _descriptionController.text.trim(),
           'usage': _usageController.text.trim(),
-          'quantity': int.tryParse(_quantityController.text) ?? 0,
+          // تم إزالة حقل الكمية العام
           'sizesWithPrices': sizePriceList,
           'categories': selectedCategories,
           'createdAt': Timestamp.now(),
@@ -200,14 +201,17 @@ class _AddProductState extends State<AddProduct> {
 
   void _addSizePrice() {
     if (_sizeSingleController.text.isNotEmpty &&
-        _priceSingleController.text.isNotEmpty) {
+        _priceSingleController.text.isNotEmpty &&
+        _quantitySingleController.text.isNotEmpty) {
       setState(() {
         sizePriceList.add({
           'size': _sizeSingleController.text.trim(),
-          'price': int.tryParse(_priceSingleController.text) ?? 0.0,
+          'price': int.tryParse(_priceSingleController.text) ?? 0,
+          'quantity': int.tryParse(_quantitySingleController.text) ?? 0,
         });
         _sizeSingleController.clear();
         _priceSingleController.clear();
+        _quantitySingleController.clear();
       });
     }
   }
@@ -223,9 +227,10 @@ class _AddProductState extends State<AddProduct> {
     _nameController.dispose();
     _descriptionController.dispose();
     _usageController.dispose();
-    _quantityController.dispose();
+    // _quantityController.dispose(); // تم حذفه
     _sizeSingleController.dispose();
     _priceSingleController.dispose();
+    _quantitySingleController.dispose();
     super.dispose();
   }
 
@@ -308,11 +313,11 @@ class _AddProductState extends State<AddProduct> {
                   onPressed: _isPickingImages ? null : _pickImages,
                   child: _isPickingImages
                       ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2),
+                  )
                       : Text('اختيار صور'),
                 ),
                 const SizedBox(height: 20),
@@ -321,24 +326,25 @@ class _AddProductState extends State<AddProduct> {
                   decoration: InputDecoration(labelText: 'اسم المنتج'),
                   textAlign: TextAlign.right,
                   validator: (value) =>
-                      value == null || value.isEmpty ? 'أدخل اسم المنتج' : null,
+                  value == null || value.isEmpty ? 'أدخل اسم المنتج' : null,
                 ),
                 TextFormField(
                   controller: _descriptionController,
                   decoration: InputDecoration(labelText: 'الوصف'),
                   textAlign: TextAlign.right,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null, // يسمح بعدد غير محدود من الأسطر
+                  minLines: 1,     // يبدأ بثلاث أسطر
                 ),
                 TextFormField(
                   controller: _usageController,
                   decoration: InputDecoration(labelText: 'طريقة الاستخدام'),
                   textAlign: TextAlign.right,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  minLines: 1,
                 ),
-                TextFormField(
-                  controller: _quantityController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'الكمية'),
-                  textAlign: TextAlign.right,
-                ),
+
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -358,22 +364,32 @@ class _AddProductState extends State<AddProduct> {
                         textAlign: TextAlign.right,
                       ),
                     ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _quantitySingleController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: 'الكمية'),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
                     IconButton(icon: Icon(Icons.add), onPressed: _addSizePrice),
                   ],
                 ),
                 ...sizePriceList.map((item) => ListTile(
-                      title: Text('${item['size']} - ${item['price']} شيكل',
-                          textDirection: TextDirection.rtl),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () => _removeSizePrice(item),
-                      ),
-                    )),
+                  title: Text(
+                      '${item['size']} - ${item['price']} شيكل - الكمية: ${item['quantity']}',
+                      textDirection: TextDirection.rtl),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _removeSizePrice(item),
+                  ),
+                )),
                 const SizedBox(height: 20),
                 Align(
                   alignment: Alignment.centerRight,
                   child:
-                      Text('اختر التصنيفات:', style: TextStyle(fontSize: 16)),
+                  Text('اختر التصنيفات:', style: TextStyle(fontSize: 16)),
                 ),
                 Wrap(
                   spacing: 8,
@@ -401,19 +417,19 @@ class _AddProductState extends State<AddProduct> {
                       backgroundColor: Color(0xFF795548)),
                   child: _isUploading
                       ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 3),
-                            ),
-                            SizedBox(width: 12),
-                            Text('جاري الإضافة...',
-                                style: TextStyle(fontSize: 16)),
-                          ],
-                        )
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3),
+                      ),
+                      SizedBox(width: 12),
+                      Text('جاري الإضافة...',
+                          style: TextStyle(fontSize: 16)),
+                    ],
+                  )
                       : Text('إضافة المنتج'),
                 ),
               ],

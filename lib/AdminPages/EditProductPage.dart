@@ -348,11 +348,17 @@ class _EditProductPageState extends State<EditProductPage> {
                   controller: _descriptionController,
                   decoration: InputDecoration(labelText: 'الوصف'),
                   textAlign: TextAlign.right,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  minLines: 1,
                 ),
                 TextFormField(
                   controller: _usageController,
                   decoration: InputDecoration(labelText: 'طريقة الاستخدام'),
                   textAlign: TextAlign.right,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  minLines: 1,
                 ),
                 TextFormField(
                   controller: _quantityController,

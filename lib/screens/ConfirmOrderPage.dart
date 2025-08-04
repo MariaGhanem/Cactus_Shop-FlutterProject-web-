@@ -172,34 +172,72 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
             : _discountCodeController.text.trim(),
         'items': cart.items
             .map((item) => {
-          'productId': item.id, // <- التعديل هنا: productId مباشر
-          'productNumber': item.productNumber,
-          'name': item.name,
-          'size': item.size,
-          'quantity': item.quantity,
-          'price': item.price,
-          'total': item.price * item.quantity,
-        })
+                  'productId': item.id, // <- التعديل هنا: productId مباشر
+                  'productNumber': item.productNumber,
+                  'name': item.name,
+                  'size': item.size,
+                  'quantity': item.quantity,
+                  'price': item.price,
+                  'total': item.price * item.quantity,
+                })
             .toList(),
         'originalPrice': cart.totalPrice,
         'finalPrice': _discountValue > 0 ? _finalPrice : cart.totalPrice,
         'discount': _discountValue > 0
             ? {
-          'code': _discountCodeController.text.trim(),
-          'percentage': _discountValue,
-        }
+                'code': _discountCodeController.text.trim(),
+                'percentage': _discountValue,
+              }
             : null,
         'orderDate': Timestamp.now(),
         'status': 'new',
         'opened': false,
       };
 
-      await ordersCollection.add(orderData);
+      final docRef = await ordersCollection.add(orderData);
+      final orderId = docRef.id;
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('تم تأكيد الطلب'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'يرجى الاحتفاظ برقم الطلب التالي للاستفسار عن طلبيتك:',
+                ),
+                const SizedBox(height: 12),
+                SelectableText(
+                  orderId,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'ننصحك بأخذ لقطة شاشة لهذا الرقم.',
+                  style: TextStyle(fontSize: 14, color: Colors.red),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('تم'),
+              ),
+            ],
+          );
+        },
+      );
+
 
       // تحديث الكميات باستخدام productId مباشر بدون استعلام منفصل
       for (var item in cart.items) {
         final productRef =
-        FirebaseFirestore.instance.collection('products').doc(item.id);
+            FirebaseFirestore.instance.collection('products').doc(item.id);
 
         await FirebaseFirestore.instance.runTransaction((transaction) async {
           final snapshot = await transaction.get(productRef);
@@ -260,186 +298,214 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
         body: cart.items.isEmpty
             ? const Center(child: Text('سلة المشتريات فارغة'))
             : Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم الكامل',
-                    border: OutlineInputBorder(),
-                  ),
-                  textDirection: TextDirection.rtl,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'يرجى إدخال الاسم الكامل';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم الهاتف',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  textDirection: TextDirection.ltr,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'يرجى إدخال رقم الهاتف';
-                    }
-                    if (!RegExp(r'^\+?\d{8,15}$').hasMatch(value.trim())) {
-                      return 'يرجى إدخال رقم هاتف صحيح';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _instagramController,
-                  decoration: const InputDecoration(
-                    labelText: 'حساب الانستجرام (اختياري)',
-                    border: OutlineInputBorder(),
-                  ),
-                  textDirection: TextDirection.ltr,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedArea,
-                  decoration: const InputDecoration(labelText: 'منطقة التوصيل'),
-                  items: deliveryAreas.map((area) {
-                    return DropdownMenuItem<String>(
-                      value: area,
-                      child: Text(area),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) updateDeliveryFee(value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                if (selectedArea != 'نقطة استلام مجانية في جنين')
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'العنوان بالتفصيل',
-                      border:  OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                    textDirection: TextDirection.rtl,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'يرجى إدخال العنوان بالتفصيل';
-                      }
-                      return null;
-                    },
-                  ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'ملاحظات ',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 2,
-                  textDirection: TextDirection.rtl,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _discountCodeController,
-                  decoration: InputDecoration(
-                    labelText: 'كود الخصم',
-                    border: const OutlineInputBorder(),
-                    errorText: _discountError,
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.check),
-                      onPressed: _checkDiscountCode,
-                    ),
-                  ),
-                  textDirection: TextDirection.ltr,
-                ),
-                const SizedBox(height: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (_discountValue > 0) ...[
-                      Text(
-                        'السعر قبل الخصم: ${cart.totalPrice.toStringAsFixed(0)} ₪',
-                        style: const TextStyle(
-                          decoration: TextDecoration.lineThrough,
-                          color: Colors.red,
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'الاسم الكامل',
+                          border: OutlineInputBorder(),
                         ),
+                        textDirection: TextDirection.rtl,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'يرجى إدخال الاسم الكامل';
+                          }
+                          return null;
+                        },
                       ),
-                      Text(
-                        'السعر بعد الخصم: ${_finalPrice.toStringAsFixed(0)} ₪',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration: const InputDecoration(
+                          labelText: 'رقم الهاتف',
+                          hintText: 'يرجى إدخال رقم الهاتف باللغة الانجليزية',
+                          border: OutlineInputBorder(),
                         ),
+                        keyboardType: TextInputType.phone,
+                        textDirection: TextDirection.ltr,
+                        validator: (value) {
+                          final phone = value?.trim() ?? '';
+
+                          if (phone.isEmpty) {
+                            return 'يرجى إدخال رقم الهاتف';
+                          }
+                          final validWithPrefix =
+                              RegExp(r'^\+(970|972)\d{8,12}$');
+                          final validWithoutPrefix =
+                              RegExp(r'^(059|056|058)\d{7}$');
+
+                          if (!validWithPrefix.hasMatch(phone) &&
+                              !validWithoutPrefix.hasMatch(phone)) {
+                            return 'رقم غير صالح: استخدم +970 أو +972 أو 059/056/058 فقط';;
+                          }
+
+                          return null;
+                        },
                       ),
-                    ] else
-                      Text(
-                        'الإجمالي: ${cart.totalPrice.toStringAsFixed(0)} ₪',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _instagramController,
+                        decoration: const InputDecoration(
+                          labelText: 'حساب الانستجرام (اختياري)',
+                          hintText:
+                              'حساب الإنستجرام (اختياري) للتواصل عند الحاجة',
+                          border: OutlineInputBorder(),
                         ),
+                        textDirection: TextDirection.ltr,
                       ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'تكلفة التوصيل: $deliveryFee ₪',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedArea,
+                        decoration:
+                            const InputDecoration(labelText: 'منطقة التوصيل'),
+                        items: deliveryAreas.map((area) {
+                          return DropdownMenuItem<String>(
+                            value: area,
+                            child: Text(area),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) updateDeliveryFee(value);
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'المجموع النهائي: ${((_discountValue > 0 ? _finalPrice : cart.totalPrice) + deliveryFee).toStringAsFixed(0)} ₪',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                      const SizedBox(height: 12),
+                      if (selectedArea != 'نقطة استلام مجانية في جنين')
+                        TextFormField(
+                          controller: _addressController,
+                          decoration: const InputDecoration(
+                            labelText: 'العنوان بالتفصيل',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                          textDirection: TextDirection.rtl,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'يرجى إدخال العنوان بالتفصيل';
+                            }
+                            return null;
+                          },
+                        ),
+                      if (selectedArea == 'نقطة استلام مجانية في جنين')
+                        Text(
+                          'لمعرفة عنوان نقطة الاستلام، تواصل معنا عبر الإنستجرام أو الواتساب – تجد الروابط في صفحة التوصيل و صفحة من نحن',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 12, // حجم صغير
+                          ),
+                          textAlign:
+                              TextAlign.center, // اختياري: إذا أردت توسيط النص
+                        ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _notesController,
+                        decoration: const InputDecoration(
+                          labelText: 'ملاحظات ',
+                          hintText:
+                              'يرجى كتابة ملاحظاتك هنا (مثل: رائحة معينة، أو استلام بعد وقت محدد)',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 2,
+                        textDirection: TextDirection.rtl,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _isSubmitting
-                      ? null
-                      : () async {
-                    if (_discountCodeController.text.trim().isNotEmpty &&
-                        !_discountChecked) {
-                      await _checkDiscountCode(); // تحقق من الكود
-                      if (_discountError != null) return; // إذا فشل، لا تكمل
-                    }
-                    _submitOrder(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(fontSize: 18),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _discountCodeController,
+                        decoration: InputDecoration(
+                          labelText: 'كود الخصم',
+                          border: const OutlineInputBorder(),
+                          errorText: _discountError,
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.check),
+                            onPressed: _checkDiscountCode,
+                          ),
+                        ),
+                        textDirection: TextDirection.ltr,
+                      ),
+                      const SizedBox(height: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (_discountValue > 0) ...[
+                            Text(
+                              'السعر قبل الخصم: ${cart.totalPrice.toStringAsFixed(0)} ₪',
+                              style: const TextStyle(
+                                decoration: TextDecoration.lineThrough,
+                                color: Colors.red,
+                              ),
+                            ),
+                            Text(
+                              'السعر بعد الخصم: ${_finalPrice.toStringAsFixed(0)} ₪',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ] else
+                            Text(
+                              'الإجمالي: ${cart.totalPrice.toStringAsFixed(0)} ₪',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'تكلفة التوصيل: $deliveryFee ₪',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'المجموع النهائي: ${((_discountValue > 0 ? _finalPrice : cart.totalPrice) + deliveryFee).toStringAsFixed(0)} ₪',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () async {
+                                if (_discountCodeController.text
+                                        .trim()
+                                        .isNotEmpty &&
+                                    !_discountChecked) {
+                                  await _checkDiscountCode(); // تحقق من الكود
+                                  if (_discountError != null)
+                                    return; // إذا فشل، لا تكمل
+                                }
+                                _submitOrder(context);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(fontSize: 18),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text('تأكيد الطلب'),
+                      ),
+                    ],
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child:
-                    CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                      : const Text('تأكيد الطلب'),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

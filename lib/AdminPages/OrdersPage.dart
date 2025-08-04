@@ -83,8 +83,13 @@ class OrdersPage extends StatelessWidget {
                         : const Icon(Icons.fiber_manual_record,
                         color: Colors.blue, size: 12), // الدائرة الزرقاء
                     title: Text(order['customerName'] ?? 'بدون اسم'),
-                    subtitle:
-                    Text("المجموع: ${order['finalPrice'].toStringAsFixed(0)} ₪"),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("رقم الطلب: ${order.id}"),
+                        Text("المجموع: ${order['finalPrice'].toStringAsFixed(0)} ₪"),
+                      ],
+                    ),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       Navigator.push(
@@ -95,6 +100,7 @@ class OrdersPage extends StatelessWidget {
                       );
                     },
                   ),
+
                 );
               },
             );
