@@ -11,7 +11,7 @@ class OrdersPage extends StatefulWidget {
 
 class _OrdersPageState extends State<OrdersPage> {
   final ScrollController _scrollController = ScrollController();
-  final int _limit = 6;
+  final int _limit = 10;
 
   List<DocumentSnapshot> _orders = [];
   List<DocumentSnapshot> _filteredOrders = [];

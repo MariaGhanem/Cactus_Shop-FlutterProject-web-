@@ -21,6 +21,7 @@ class WelcomePage extends StatefulWidget {
 
 class _WelcomePageState extends State<WelcomePage> {
   bool isAdmin = false;
+  bool isDiscountExpired = false;
 
   // متغيرات بيانات الخصم
   String discountCode = '';
@@ -35,6 +36,9 @@ class _WelcomePageState extends State<WelcomePage> {
   bool hasMoreCategories = true;
   DocumentSnapshot? lastCategoryDoc;
   final ScrollController _scrollController = ScrollController();
+
+  // المتغير الجديد لتمرير الوقت المتبقي
+  Duration? _remaining;
 
   @override
   void initState() {
@@ -88,20 +92,28 @@ class _WelcomePageState extends State<WelcomePage> {
       final code = data['code'] ?? '';
 
       if (code.isNotEmpty) {
-        final discountDoc =
-        await FirebaseFirestore.instance.collection('discounts').doc(code).get();
+        final discountDoc = await FirebaseFirestore.instance
+            .collection('discounts')
+            .doc(code)
+            .get();
 
         if (discountDoc.exists) {
           final discountData = discountDoc.data()!;
           final Timestamp? ts = discountData['expirationDate'];
 
-          if (mounted) {
-            setState(() {
-              discountCode = code;
-              discountPercentage = discountData['percentage'] ?? 0;
-              discountMessage = discountData['message'] ?? discountMessage;
-              if (ts != null) discountExpireDate = ts.toDate();
-            });
+          if (ts != null) {
+            final DateTime expireTime = ts.toDate();
+            final bool expired = expireTime.isBefore(DateTime.now());
+
+            if (mounted) {
+              setState(() {
+                discountCode = code;
+                discountPercentage = discountData['percentage'] ?? 0;
+                discountMessage = discountData['message'] ?? discountMessage;
+                discountExpireDate = expireTime;
+                isDiscountExpired = expired;
+              });
+            }
           }
         }
       }
@@ -240,16 +252,66 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
             ),
 
-            if (discountCode.isNotEmpty && discountPercentage > 0)
+            // داخل build في مكان استخدام DiscountCountdownBanner
+            if (discountCode.isNotEmpty && discountPercentage > 0 && !isDiscountExpired)
               Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: DiscountCountdownBanner(
                   expirationDate: discountExpireDate,
                   message: discountMessage,
                   discountCode: discountCode,
                   discountPercentage: discountPercentage,
+                  onExpired: () {
+                    if (mounted) {
+                      setState(() {
+                        isDiscountExpired = true;
+                      });
+                    }
+                  },
                 ),
+              ),
+
+            // عرض رسالة "انتهى العرض" لو انتهى الوقت لكن الكود مازال موجود
+            if (discountCode.isNotEmpty && discountPercentage > 0 && isDiscountExpired)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD81B60),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.local_offer, color: Colors.white),
+                      SizedBox(width: 12),
+                      Text(
+                        'انتهى العرض!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(1, 1),
+                              blurRadius: 4,
+                              color: Colors.black54,
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
               ),
 
             SeparatorContainer(text: 'تسوّقي حسب الفئة'),

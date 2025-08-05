@@ -6,6 +6,7 @@ class DiscountCountdownBanner extends StatefulWidget {
   final String message;
   final String discountCode;
   final int discountPercentage;
+  final VoidCallback? onExpired;  // <-- فقط هذا الحدث
 
   const DiscountCountdownBanner({
     super.key,
@@ -13,6 +14,7 @@ class DiscountCountdownBanner extends StatefulWidget {
     required this.message,
     required this.discountCode,
     required this.discountPercentage,
+    this.onExpired,
   });
 
   @override
@@ -34,12 +36,17 @@ class _DiscountCountdownBannerState extends State<DiscountCountdownBanner> {
 
   void _updateRemaining() {
     final now = DateTime.now();
-    setState(() {
-      _remaining = widget.expirationDate.difference(now);
-      if (_remaining.isNegative) {
-        _remaining = Duration.zero;
-        _timer.cancel();
+    final newRemaining = widget.expirationDate.difference(now);
+
+    if (newRemaining.isNegative && _remaining != Duration.zero) {
+      _timer.cancel();
+      if (widget.onExpired != null) {
+        widget.onExpired!();  // Notify parent that time expired
       }
+    }
+
+    setState(() {
+      _remaining = newRemaining.isNegative ? Duration.zero : newRemaining;
     });
   }
 
